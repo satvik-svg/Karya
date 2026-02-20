@@ -13,12 +13,15 @@ interface Task {
   description: string | null;
   priority: string;
   status: string;
+  trackingStatus?: string;
+  startDate?: string | null;
   dueDate: string | null;
   order: number;
   completed: boolean;
   sectionId: string;
   projectId: string;
   assignee: { id: string; name: string; avatar: string | null; email: string } | null;
+  assignees?: Array<{ user: { id: string; name: string; avatar: string | null; email: string } }>;
   _count: { comments: number; attachments: number };
 }
 

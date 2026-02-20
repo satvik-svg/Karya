@@ -22,6 +22,7 @@ model User {
   teamMembers    TeamMember[]
   assignedTasks  Task[]         @relation("TaskAssignee")
   createdTasks   Task[]         @relation("TaskCreator")
+  taskAssignments TaskAssignee[]
   comments       Comment[]
   attachments    Attachment[]
   projects       Project[]      @relation("ProjectCreator")
@@ -88,10 +89,12 @@ model Task {
   id          String    @id @default(uuid())
   title       String
   description String?
-  priority    String    @default("medium") // "low", "medium", "high", "urgent"
-  status      String    @default("todo")   // "todo", "in_progress", "done"
-  dueDate     DateTime?
-  order       Int       @default(0)
+  priority       String    @default("medium") // "low", "medium", "high", "urgent"
+  status         String    @default("todo")   // "todo", "in_progress", "done"
+  trackingStatus String    @default("on_track") // "on_track", "at_risk", "off_track"
+  startDate      DateTime?
+  dueDate        DateTime?
+  order          Int       @default(0)
   completed   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -110,6 +113,7 @@ model Task {
   subtasks    Subtask[]
   activities  ActivityLog[]
   tags        TaskTag[]
+  assignees   TaskAssignee[]
 }
 
 model Subtask {
@@ -198,6 +202,18 @@ model TaskTag {
   tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, tagId])
+}
+
+model TaskAssignee {
+  id        String   @id @default(uuid())
+  taskId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
 }
 
 model Goal {

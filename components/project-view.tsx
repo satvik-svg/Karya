@@ -27,12 +27,15 @@ interface Task {
   description: string | null;
   priority: string;
   status: string;
+  trackingStatus?: string;
+  startDate?: string | null;
   dueDate: string | null;
   order: number;
   completed: boolean;
   sectionId: string;
   projectId: string;
   assignee: { id: string; name: string; avatar: string | null; email: string } | null;
+  assignees?: Array<{ user: { id: string; name: string; avatar: string | null; email: string } }>;
   _count: { comments: number; attachments: number };
 }
 
@@ -69,9 +72,10 @@ export function ProjectView({ project, teamMembers, currentUserId }: Props) {
   const [filterPriority, setFilterPriority] = useState<string>("");
   const [filterAssignee, setFilterAssignee] = useState<string>("");
   const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterTrackingStatus, setFilterTrackingStatus] = useState<string>("");
   const [filterSearch, setFilterSearch] = useState("");
 
-  const hasActiveFilters = filterPriority || filterAssignee || filterStatus || filterSearch;
+  const hasActiveFilters = filterPriority || filterAssignee || filterStatus || filterTrackingStatus || filterSearch;
 
   const filteredSections = useMemo(() => {
     if (!hasActiveFilters) return project.sections;
@@ -79,15 +83,19 @@ export function ProjectView({ project, teamMembers, currentUserId }: Props) {
       ...section,
       tasks: section.tasks.filter((task) => {
         if (filterPriority && task.priority !== filterPriority) return false;
-        if (filterAssignee === "unassigned" && task.assignee) return false;
-        if (filterAssignee && filterAssignee !== "unassigned" && task.assignee?.id !== filterAssignee) return false;
+        if (filterAssignee === "unassigned" && (task.assignees?.length || task.assignee)) return false;
+        if (filterAssignee && filterAssignee !== "unassigned") {
+          const hasAssignee = task.assignees?.some((a) => a.user.id === filterAssignee) || task.assignee?.id === filterAssignee;
+          if (!hasAssignee) return false;
+        }
         if (filterStatus === "completed" && !task.completed) return false;
         if (filterStatus === "incomplete" && task.completed) return false;
+        if (filterTrackingStatus && task.trackingStatus !== filterTrackingStatus) return false;
         if (filterSearch && !task.title.toLowerCase().includes(filterSearch.toLowerCase())) return false;
         return true;
       }),
     }));
-  }, [project.sections, filterPriority, filterAssignee, filterStatus, filterSearch, hasActiveFilters]);
+  }, [project.sections, filterPriority, filterAssignee, filterStatus, filterTrackingStatus, filterSearch, hasActiveFilters]);
 
   return (
     <div className="h-full flex flex-col">
@@ -189,6 +197,7 @@ export function ProjectView({ project, teamMembers, currentUserId }: Props) {
                   setFilterPriority("");
                   setFilterAssignee("");
                   setFilterStatus("");
+                  setFilterTrackingStatus("");
                   setFilterSearch("");
                 }}
                 className="ml-1 hover:text-indigo-900"
@@ -239,6 +248,16 @@ export function ProjectView({ project, teamMembers, currentUserId }: Props) {
                 <option value="">All statuses</option>
                 <option value="incomplete">Incomplete</option>
                 <option value="completed">Completed</option>
+              </select>
+              <select
+                value={filterTrackingStatus}
+                onChange={(e) => setFilterTrackingStatus(e.target.value)}
+                className="px-2 py-1 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none"
+              >
+                <option value="">All tracking</option>
+                <option value="on_track">On Track</option>
+                <option value="at_risk">At Risk</option>
+                <option value="off_track">Off Track</option>
               </select>
             </>
           )}

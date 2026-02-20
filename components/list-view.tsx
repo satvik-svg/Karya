@@ -21,12 +21,15 @@ interface Task {
   description: string | null;
   priority: string;
   status: string;
+  trackingStatus?: string;
+  startDate?: string | null;
   dueDate: string | null;
   order: number;
   completed: boolean;
   sectionId: string;
   projectId: string;
   assignee: { id: string; name: string; avatar: string | null; email: string } | null;
+  assignees?: Array<{ user: { id: string; name: string; avatar: string | null; email: string } }>;
   _count: { comments: number; attachments: number };
 }
 
@@ -55,6 +58,12 @@ const SECTION_COLORS: Record<string, string> = {
   "To Do": "border-l-gray-400",
   "In Progress": "border-l-blue-500",
   "Done": "border-l-green-500",
+};
+
+const TRACKING_STATUS_STYLES: Record<string, { label: string; bg: string; text: string }> = {
+  on_track: { label: "On Track", bg: "bg-green-50", text: "text-green-700" },
+  at_risk: { label: "At Risk", bg: "bg-yellow-50", text: "text-yellow-700" },
+  off_track: { label: "Off Track", bg: "bg-red-50", text: "text-red-700" },
 };
 
 export function ListView({ sections, projectId, teamMembers, onTaskClick }: Props) {
@@ -103,10 +112,11 @@ export function ListView({ sections, projectId, teamMembers, onTaskClick }: Prop
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 {/* Header */}
                 <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="col-span-5">Task</div>
+                  <div className="col-span-4">Task</div>
                   <div className="col-span-2">Assignee</div>
-                  <div className="col-span-2">Due Date</div>
+                  <div className="col-span-2">Dates</div>
                   <div className="col-span-1">Priority</div>
+                  <div className="col-span-1">Status</div>
                   <div className="col-span-2 text-right">Activity</div>
                 </div>
 
@@ -130,7 +140,7 @@ export function ListView({ sections, projectId, teamMembers, onTaskClick }: Prop
                         }`}
                       >
                         {/* Task name */}
-                        <div className="col-span-5 flex items-center gap-2 min-w-0">
+                        <div className="col-span-4 flex items-center gap-2 min-w-0">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -159,23 +169,44 @@ export function ListView({ sections, projectId, teamMembers, onTaskClick }: Prop
 
                         {/* Assignee */}
                         <div className="col-span-2 flex items-center">
-                          {task.assignee ? (
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-medium">
-                                {task.assignee.name[0].toUpperCase()}
+                          {(() => {
+                            const assigneeList = task.assignees && task.assignees.length > 0
+                              ? task.assignees.map((a) => a.user)
+                              : task.assignee
+                              ? [task.assignee]
+                              : [];
+                            if (assigneeList.length === 0) return <span className="text-sm text-gray-300">Unassigned</span>;
+                            return (
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex -space-x-1.5">
+                                  {assigneeList.slice(0, 2).map((a) => (
+                                    <div
+                                      key={a.id}
+                                      className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-medium ring-2 ring-white"
+                                      title={a.name}
+                                    >
+                                      {a.name[0].toUpperCase()}
+                                    </div>
+                                  ))}
+                                  {assigneeList.length > 2 && (
+                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-medium text-gray-600 ring-2 ring-white">
+                                      +{assigneeList.length - 2}
+                                    </div>
+                                  )}
+                                </div>
+                                {assigneeList.length === 1 && (
+                                  <span className="text-sm text-gray-600 truncate">
+                                    {assigneeList[0].name.split(" ")[0]}
+                                  </span>
+                                )}
                               </div>
-                              <span className="text-sm text-gray-600 truncate">
-                                {task.assignee.name.split(" ")[0]}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-gray-300">Unassigned</span>
-                          )}
+                            );
+                          })()}
                         </div>
 
-                        {/* Due date */}
+                        {/* Date range */}
                         <div className="col-span-2 flex items-center">
-                          {hasDueDate ? (
+                          {(task.startDate || hasDueDate) ? (
                             <span
                               className={`flex items-center gap-1 text-sm ${
                                 isOverdue
@@ -186,11 +217,15 @@ export function ListView({ sections, projectId, teamMembers, onTaskClick }: Prop
                               }`}
                             >
                               <Calendar className="w-3.5 h-3.5" />
-                              {isOverdue
-                                ? "Overdue"
-                                : isDueToday
-                                ? "Today"
-                                : format(new Date(task.dueDate!), "MMM d")}
+                              {task.startDate && !hasDueDate && format(new Date(task.startDate), "MMM d")}
+                              {task.startDate && hasDueDate && `${format(new Date(task.startDate), "MMM d")} – `}
+                              {hasDueDate && (
+                                isOverdue
+                                  ? "Overdue"
+                                  : isDueToday
+                                  ? "Today"
+                                  : format(new Date(task.dueDate!), "MMM d")
+                              )}
                             </span>
                           ) : (
                             <span className="text-sm text-gray-300">No date</span>
@@ -206,6 +241,23 @@ export function ListView({ sections, projectId, teamMembers, onTaskClick }: Prop
                           >
                             {task.priority}
                           </span>
+                        </div>
+
+                        {/* Tracking Status */}
+                        <div className="col-span-1 flex items-center">
+                          {task.trackingStatus && TRACKING_STATUS_STYLES[task.trackingStatus] ? (
+                            <span
+                              className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                TRACKING_STATUS_STYLES[task.trackingStatus].bg
+                              } ${
+                                TRACKING_STATUS_STYLES[task.trackingStatus].text
+                              }`}
+                            >
+                              {TRACKING_STATUS_STYLES[task.trackingStatus].label}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-300">—</span>
+                          )}
                         </div>
 
                         {/* Activity */}

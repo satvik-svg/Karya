@@ -89,6 +89,11 @@ export async function getProject(projectId: string) {
             orderBy: { order: "asc" },
             include: {
               assignee: { select: { id: true, name: true, avatar: true, email: true } },
+              assignees: {
+                include: {
+                  user: { select: { id: true, name: true, avatar: true, email: true } },
+                },
+              },
               _count: { select: { comments: true, attachments: true } },
             },
           },

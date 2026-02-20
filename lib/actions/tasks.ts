@@ -22,9 +22,15 @@ export async function createTask(formData: FormData) {
   const description = formData.get("description") as string;
   const projectId = formData.get("projectId") as string;
   const sectionId = formData.get("sectionId") as string;
-  const assigneeId = formData.get("assigneeId") as string | null;
   const priority = (formData.get("priority") as string) || "medium";
   const dueDate = formData.get("dueDate") as string;
+  const startDate = formData.get("startDate") as string;
+  const trackingStatus = (formData.get("trackingStatus") as string) || "on_track";
+
+  // Support multiple assignees
+  const assigneeIds = formData.getAll("assigneeId") as string[];
+  const validAssigneeIds = assigneeIds.filter((id) => id && id.trim() !== "");
+  const primaryAssigneeId = validAssigneeIds[0] || null;
 
   if (!title || !projectId || !sectionId) {
     return { error: "Title, project, and section are required" };
@@ -42,10 +48,15 @@ export async function createTask(formData: FormData) {
       projectId,
       sectionId,
       creatorId: user.id,
-      assigneeId: assigneeId || null,
+      assigneeId: primaryAssigneeId,
       priority,
       dueDate: dueDate ? new Date(dueDate) : null,
+      startDate: startDate ? new Date(startDate) : null,
+      trackingStatus,
       order: (lastTask?.order ?? -1) + 1,
+      assignees: validAssigneeIds.length > 0 ? {
+        create: validAssigneeIds.map((userId) => ({ userId })),
+      } : undefined,
     },
   });
 
@@ -59,16 +70,18 @@ export async function createTask(formData: FormData) {
     },
   });
 
-  // Notify assignee
-  if (assigneeId && assigneeId !== user.id) {
-    await prisma.notification.create({
-      data: {
-        type: "assigned",
-        message: `${user.name} assigned you to "${title}"`,
-        link: `/dashboard/projects/${projectId}`,
-        userId: assigneeId,
-      },
-    });
+  // Notify assignees
+  for (const assigneeId of validAssigneeIds) {
+    if (assigneeId !== user.id) {
+      await prisma.notification.create({
+        data: {
+          type: "assigned",
+          message: `${user.name} assigned you to "${title}"`,
+          link: `/dashboard/projects/${projectId}`,
+          userId: assigneeId,
+        },
+      });
+    }
   }
 
   revalidatePath(`/dashboard/projects/${projectId}`);
@@ -81,6 +94,8 @@ export async function updateTask(taskId: string, data: {
   priority?: string;
   status?: string;
   dueDate?: string | null;
+  startDate?: string | null;
+  trackingStatus?: string;
   assigneeId?: string | null;
   sectionId?: string;
   order?: number;
@@ -96,6 +111,9 @@ export async function updateTask(taskId: string, data: {
       ...data,
       dueDate: data.dueDate !== undefined
         ? (data.dueDate ? new Date(data.dueDate) : null)
+        : undefined,
+      startDate: data.startDate !== undefined
+        ? (data.startDate ? new Date(data.startDate) : null)
         : undefined,
     },
   });
@@ -205,6 +223,11 @@ export async function getTask(taskId: string) {
     where: { id: taskId },
     include: {
       assignee: { select: { id: true, name: true, email: true, avatar: true } },
+      assignees: {
+        include: {
+          user: { select: { id: true, name: true, email: true, avatar: true } },
+        },
+      },
       creator: { select: { id: true, name: true, email: true, avatar: true } },
       comments: {
         orderBy: { createdAt: "asc" },
@@ -255,10 +278,161 @@ export async function getFilteredTasks(projectId: string, filters: {
     where,
     include: {
       assignee: { select: { id: true, name: true, avatar: true, email: true } },
+      assignees: {
+        include: {
+          user: { select: { id: true, name: true, avatar: true, email: true } },
+        },
+      },
       section: { select: { id: true, name: true } },
       _count: { select: { comments: true, attachments: true, subtasks: true } },
       tags: { include: { tag: true } },
     },
     orderBy: { order: "asc" },
   });
+}
+
+export async function addTaskAssignee(taskId: string, userId: string) {
+  const user = await getCurrentUser();
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task) return { error: "Task not found" };
+
+  // Check if already assigned
+  const existing = await prisma.taskAssignee.findUnique({
+    where: { taskId_userId: { taskId, userId } },
+  });
+  if (existing) return { error: "User already assigned" };
+
+  await prisma.taskAssignee.create({
+    data: { taskId, userId },
+  });
+
+  // If no primary assignee, set this one
+  if (!task.assigneeId) {
+    await prisma.task.update({
+      where: { id: taskId },
+      data: { assigneeId: userId },
+    });
+  }
+
+  // Log activity
+  await prisma.activityLog.create({
+    data: {
+      action: "assigned",
+      details: JSON.stringify({ assigneeId: userId }),
+      taskId,
+      userId: user.id,
+    },
+  });
+
+  // Notify
+  if (userId !== user.id) {
+    await prisma.notification.create({
+      data: {
+        type: "assigned",
+        message: `${user.name} assigned you to "${task.title}"`,
+        link: `/dashboard/projects/${task.projectId}`,
+        userId,
+      },
+    });
+  }
+
+  revalidatePath(`/dashboard/projects/${task.projectId}`);
+  revalidatePath("/dashboard/my-tasks");
+  return { success: true };
+}
+
+export async function removeTaskAssignee(taskId: string, userId: string) {
+  const user = await getCurrentUser();
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task) return { error: "Task not found" };
+
+  await prisma.taskAssignee.deleteMany({
+    where: { taskId, userId },
+  });
+
+  // If removing the primary assignee, update to next assignee or null
+  if (task.assigneeId === userId) {
+    const nextAssignee = await prisma.taskAssignee.findFirst({
+      where: { taskId },
+    });
+    await prisma.task.update({
+      where: { id: taskId },
+      data: { assigneeId: nextAssignee?.userId || null },
+    });
+  }
+
+  await prisma.activityLog.create({
+    data: {
+      action: "assigned",
+      details: JSON.stringify({ removed: userId }),
+      taskId,
+      userId: user.id,
+    },
+  });
+
+  revalidatePath(`/dashboard/projects/${task.projectId}`);
+  revalidatePath("/dashboard/my-tasks");
+  return { success: true };
+}
+
+export async function updateTaskAssignees(taskId: string, userIds: string[]) {
+  const user = await getCurrentUser();
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: { assignees: true },
+  });
+  if (!task) return { error: "Task not found" };
+
+  const currentIds = task.assignees.map((a) => a.userId);
+  const toAdd = userIds.filter((id) => !currentIds.includes(id));
+  const toRemove = currentIds.filter((id) => !userIds.includes(id));
+
+  // Remove
+  if (toRemove.length > 0) {
+    await prisma.taskAssignee.deleteMany({
+      where: { taskId, userId: { in: toRemove } },
+    });
+  }
+
+  // Add
+  if (toAdd.length > 0) {
+    await prisma.taskAssignee.createMany({
+      data: toAdd.map((userId) => ({ taskId, userId })),
+    });
+  }
+
+  // Update primary assignee
+  const primaryAssignee = userIds[0] || null;
+  await prisma.task.update({
+    where: { id: taskId },
+    data: { assigneeId: primaryAssignee },
+  });
+
+  // Log activity
+  await prisma.activityLog.create({
+    data: {
+      action: "assigned",
+      details: JSON.stringify({ assignees: userIds }),
+      taskId,
+      userId: user.id,
+    },
+  });
+
+  // Notify new assignees
+  for (const userId of toAdd) {
+    if (userId !== user.id) {
+      await prisma.notification.create({
+        data: {
+          type: "assigned",
+          message: `${user.name} assigned you to "${task.title}"`,
+          link: `/dashboard/projects/${task.projectId}`,
+          userId,
+        },
+      });
+    }
+  }
+
+  revalidatePath(`/dashboard/projects/${task.projectId}`);
+  revalidatePath("/dashboard/my-tasks");
+  return { success: true };
 }

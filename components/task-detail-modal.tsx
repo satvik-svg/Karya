@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { getTask, updateTask, deleteTask } from "@/lib/actions/tasks";
+import { getTask, updateTask, deleteTask, updateTaskAssignees } from "@/lib/actions/tasks";
 import { addComment, deleteComment, addAttachment, deleteAttachment } from "@/lib/actions/comments";
 import { createSubtask, toggleSubtask, deleteSubtask } from "@/lib/actions/subtasks";
 import { getTaskActivities } from "@/lib/actions/activity";
@@ -69,10 +69,13 @@ interface FullTask {
   description: string | null;
   priority: string;
   status: string;
+  trackingStatus: string;
+  startDate: string | null;
   dueDate: string | null;
   completed: boolean;
   createdAt: string;
   assignee: TeamMember | null;
+  assignees: Array<{ user: TeamMember }>;
   creator: TeamMember;
   section: { id: string; name: string };
   project: { id: string; name: string };
@@ -131,6 +134,8 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
   const [allTags, setAllTags] = useState<TagItem[]>([]);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [newTagName, setNewTagName] = useState("");
+  const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
+  const [assigneeSearch, setAssigneeSearch] = useState("");
 
   useEffect(() => {
     loadTask();
@@ -180,10 +185,38 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
     });
   }
 
+  async function handleToggleAssignee(userId: string) {
+    if (!task) return;
+    const currentIds = (task.assignees || []).map((a) => a.user.id);
+    const newIds = currentIds.includes(userId)
+      ? currentIds.filter((id) => id !== userId)
+      : [...currentIds, userId];
+    startTransition(async () => {
+      await updateTaskAssignees(task.id, newIds);
+      await loadTask();
+    });
+  }
+
   async function handleUpdateDueDate(dueDate: string) {
     if (!task) return;
     startTransition(async () => {
       await updateTask(task.id, { dueDate: dueDate || null });
+      await loadTask();
+    });
+  }
+
+  async function handleUpdateStartDate(startDate: string) {
+    if (!task) return;
+    startTransition(async () => {
+      await updateTask(task.id, { startDate: startDate || null });
+      await loadTask();
+    });
+  }
+
+  async function handleUpdateTrackingStatus(trackingStatus: string) {
+    if (!task) return;
+    startTransition(async () => {
+      await updateTask(task.id, { trackingStatus });
       await loadTask();
     });
   }
@@ -476,38 +509,90 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
 
               {/* Properties */}
               <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
-                {/* Assignee */}
-                <div>
+                {/* Assignees */}
+                <div className="col-span-2">
                   <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1.5">
                     <User className="w-3.5 h-3.5" />
-                    Assignee
+                    Assignees
                   </label>
-                  <select
-                    value={task.assignee?.id || ""}
-                    onChange={(e) => handleUpdateAssignee(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                  >
-                    <option value="">Unassigned</option>
-                    {teamMembers.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <div className="relative">
+                    {/* Selected assignee chips */}
+                    <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                      {(task.assignees || []).map((a) => (
+                        <span
+                          key={a.user.id}
+                          className="inline-flex items-center gap-1.5 pl-1 pr-2 py-0.5 text-xs font-medium bg-white border border-gray-200 rounded-full"
+                        >
+                          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-[8px] font-medium">
+                            {a.user.name[0].toUpperCase()}
+                          </div>
+                          {a.user.name.split(" ")[0]}
+                          <button
+                            onClick={() => handleToggleAssignee(a.user.id)}
+                            className="text-gray-400 hover:text-red-500"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                      {(task.assignees || []).length === 0 && (
+                        <span className="text-sm text-gray-400">Unassigned</span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
+                      className="text-xs text-indigo-500 hover:text-indigo-700 font-medium flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      {(task.assignees || []).length === 0 ? "Add assignee" : "Add / remove"}
+                    </button>
 
-                {/* Due Date */}
-                <div>
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1.5">
-                    <Calendar className="w-3.5 h-3.5" />
-                    Due Date
-                  </label>
-                  <input
-                    type="date"
-                    value={task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : ""}
-                    onChange={(e) => handleUpdateDueDate(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                  />
+                    {showAssigneeDropdown && (
+                      <div className="absolute z-20 top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg w-64 overflow-hidden">
+                        <div className="p-2 border-b border-gray-100">
+                          <input
+                            type="text"
+                            value={assigneeSearch}
+                            onChange={(e) => setAssigneeSearch(e.target.value)}
+                            placeholder="Name or email"
+                            className="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="overflow-y-auto max-h-44">
+                          {teamMembers
+                            .filter(
+                              (m) =>
+                                m.name.toLowerCase().includes(assigneeSearch.toLowerCase()) ||
+                                m.email.toLowerCase().includes(assigneeSearch.toLowerCase())
+                            )
+                            .map((m) => {
+                              const isSelected = (task.assignees || []).some((a) => a.user.id === m.id);
+                              return (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => handleToggleAssignee(m.id)}
+                                  className="flex items-center gap-3 w-full px-3 py-2 hover:bg-gray-50 transition"
+                                >
+                                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-medium shrink-0">
+                                    {m.name[0].toUpperCase()}
+                                  </div>
+                                  <div className="flex-1 text-left min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">{m.name}</p>
+                                    <p className="text-xs text-gray-400 truncate">{m.email}</p>
+                                  </div>
+                                  {isSelected && (
+                                    <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Priority */}
@@ -525,6 +610,51 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
                     <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+
+                {/* Start Date */}
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1.5">
+                    <Calendar className="w-3.5 h-3.5" />
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={task.startDate ? format(new Date(task.startDate), "yyyy-MM-dd") : ""}
+                    onChange={(e) => handleUpdateStartDate(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  />
+                </div>
+
+                {/* Due Date */}
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1.5">
+                    <Calendar className="w-3.5 h-3.5" />
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    value={task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : ""}
+                    onChange={(e) => handleUpdateDueDate(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  />
+                </div>
+
+                {/* Tracking Status */}
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1.5">
+                    <Activity className="w-3.5 h-3.5" />
+                    Tracking Status
+                  </label>
+                  <select
+                    value={task.trackingStatus || "on_track"}
+                    onChange={(e) => handleUpdateTrackingStatus(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                    <option value="on_track">On Track</option>
+                    <option value="at_risk">At Risk</option>
+                    <option value="off_track">Off Track</option>
                   </select>
                 </div>
 

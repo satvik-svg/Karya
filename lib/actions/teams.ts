@@ -10,6 +10,30 @@ async function getCurrentUserId() {
   return session.user.id;
 }
 
+export async function createTeam(name: string) {
+  const userId = await getCurrentUserId();
+
+  if (!name || !name.trim()) {
+    return { error: "Team name is required" };
+  }
+
+  const team = await prisma.team.create({
+    data: {
+      name: name.trim(),
+      members: {
+        create: {
+          userId,
+          role: "owner",
+        },
+      },
+    },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/team");
+  return { success: true, teamId: team.id };
+}
+
 export async function getTeams() {
   const userId = await getCurrentUserId();
   return prisma.team.findMany({

@@ -37,24 +37,6 @@ export async function registerUser(formData: FormData) {
     },
   });
 
-  // Create a default project
-  await prisma.project.create({
-    data: {
-      name: "My First Project",
-      description: "Get started by adding tasks to this project",
-      color: "#6366f1",
-      teamId: team.id,
-      creatorId: user.id,
-      sections: {
-        create: [
-          { name: "To Do", order: 0 },
-          { name: "In Progress", order: 1 },
-          { name: "Done", order: 2 },
-        ],
-      },
-    },
-  });
-
   // Sign in the user
   await signIn("credentials", {
     email,

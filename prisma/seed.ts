@@ -86,14 +86,14 @@ async function main() {
   const done = sections1.find((s: { name: string }) => s.name === "Done")!;
 
   const tasks = [
-    { title: "Design homepage mockup", description: "Create Figma mockup for the new homepage layout", sectionId: inProgress.id, assigneeId: user2.id, priority: "high", dueDate: new Date("2026-03-01"), order: 0 },
-    { title: "Set up CI/CD pipeline", description: "Configure GitHub Actions for automated deployment", sectionId: todo.id, assigneeId: user3.id, priority: "medium", dueDate: new Date("2026-03-10"), order: 0 },
-    { title: "Write homepage copy", description: "Draft compelling copy for the hero section and features", sectionId: todo.id, assigneeId: user.id, priority: "high", dueDate: new Date("2026-02-28"), order: 1 },
-    { title: "Implement responsive nav", description: "Build the responsive navigation component", sectionId: inProgress.id, assigneeId: user.id, priority: "medium", dueDate: new Date("2026-03-05"), order: 1 },
-    { title: "Create brand guidelines doc", description: null, sectionId: done.id, assigneeId: user2.id, priority: "low", completed: true, order: 0 },
-    { title: "Set up analytics tracking", description: "Integrate Google Analytics and event tracking", sectionId: todo.id, assigneeId: null, priority: "low", dueDate: new Date("2026-03-15"), order: 2 },
-    { title: "User research interviews", description: "Conduct 5 user interviews for feedback on current site", sectionId: done.id, assigneeId: user3.id, priority: "high", completed: true, order: 1 },
-    { title: "Design footer section", description: "Footer with newsletter signup and social links", sectionId: todo.id, assigneeId: user2.id, priority: "medium", dueDate: new Date("2026-03-08"), order: 3 },
+    { title: "Design homepage mockup", description: "Create Figma mockup for the new homepage layout", sectionId: inProgress.id, assigneeId: user2.id, priority: "high", dueDate: new Date("2026-03-01"), startDate: new Date("2026-02-10"), trackingStatus: "on_track", order: 0 },
+    { title: "Set up CI/CD pipeline", description: "Configure GitHub Actions for automated deployment", sectionId: todo.id, assigneeId: user3.id, priority: "medium", dueDate: new Date("2026-03-10"), startDate: new Date("2026-02-20"), trackingStatus: "on_track", order: 0 },
+    { title: "Write homepage copy", description: "Draft compelling copy for the hero section and features", sectionId: todo.id, assigneeId: user.id, priority: "high", dueDate: new Date("2026-02-28"), startDate: new Date("2026-02-15"), trackingStatus: "at_risk", order: 1 },
+    { title: "Implement responsive nav", description: "Build the responsive navigation component", sectionId: inProgress.id, assigneeId: user.id, priority: "medium", dueDate: new Date("2026-03-05"), startDate: new Date("2026-02-18"), trackingStatus: "on_track", order: 1 },
+    { title: "Create brand guidelines doc", description: null, sectionId: done.id, assigneeId: user2.id, priority: "low", completed: true, trackingStatus: "on_track", order: 0 },
+    { title: "Set up analytics tracking", description: "Integrate Google Analytics and event tracking", sectionId: todo.id, assigneeId: null, priority: "low", dueDate: new Date("2026-03-15"), trackingStatus: "off_track", order: 2 },
+    { title: "User research interviews", description: "Conduct 5 user interviews for feedback on current site", sectionId: done.id, assigneeId: user3.id, priority: "high", completed: true, trackingStatus: "on_track", order: 1 },
+    { title: "Design footer section", description: "Footer with newsletter signup and social links", sectionId: todo.id, assigneeId: user2.id, priority: "medium", dueDate: new Date("2026-03-08"), startDate: new Date("2026-02-25"), trackingStatus: "at_risk", order: 3 },
   ];
 
   for (const task of tasks) {
@@ -154,11 +154,11 @@ async function main() {
   const done2 = sections2.find((s: { name: string }) => s.name === "Done")!;
 
   const mobileTasks = [
-    { title: "Push notification system", sectionId: sprint.id, assigneeId: user.id, priority: "urgent", dueDate: new Date("2026-02-25"), order: 0 },
-    { title: "Dark mode support", sectionId: backlog.id, assigneeId: user3.id, priority: "medium", order: 0 },
-    { title: "Offline data sync", sectionId: backlog.id, assigneeId: null, priority: "high", order: 1 },
-    { title: "Biometric authentication", sectionId: review.id, assigneeId: user2.id, priority: "high", order: 0 },
-    { title: "App store screenshots", sectionId: done2.id, assigneeId: user2.id, priority: "low", completed: true, order: 0 },
+    { title: "Push notification system", sectionId: sprint.id, assigneeId: user.id, priority: "urgent", dueDate: new Date("2026-02-25"), startDate: new Date("2026-02-10"), trackingStatus: "at_risk", order: 0 },
+    { title: "Dark mode support", sectionId: backlog.id, assigneeId: user3.id, priority: "medium", trackingStatus: "on_track", order: 0 },
+    { title: "Offline data sync", sectionId: backlog.id, assigneeId: null, priority: "high", trackingStatus: "off_track", order: 1 },
+    { title: "Biometric authentication", sectionId: review.id, assigneeId: user2.id, priority: "high", trackingStatus: "on_track", order: 0 },
+    { title: "App store screenshots", sectionId: done2.id, assigneeId: user2.id, priority: "low", completed: true, trackingStatus: "on_track", order: 0 },
   ];
 
   for (const task of mobileTasks) {

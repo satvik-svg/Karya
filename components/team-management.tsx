@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { inviteToTeam, removeFromTeam } from "@/lib/actions/teams";
+import { inviteToTeam, removeFromTeam, createTeam } from "@/lib/actions/teams";
 import {
   Users,
   UserPlus,
@@ -11,6 +11,7 @@ import {
   Trash2,
   Loader2,
   Mail,
+  Plus,
 } from "lucide-react";
 
 interface TeamMember {
@@ -48,6 +49,24 @@ export function TeamManagement({ teams, currentUserId }: Props) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [showCreateTeam, setShowCreateTeam] = useState(false);
+  const [newTeamName, setNewTeamName] = useState("");
+
+  async function handleCreateTeam() {
+    if (!newTeamName.trim()) return;
+    setError("");
+    setSuccess("");
+    startTransition(async () => {
+      const result = await createTeam(newTeamName.trim());
+      if (result?.error) {
+        setError(result.error);
+      } else {
+        setSuccess(`Team "${newTeamName}" created successfully`);
+        setNewTeamName("");
+        setShowCreateTeam(false);
+      }
+    });
+  }
 
   async function handleInvite() {
     if (!inviteEmail.trim() || !inviteTeamId) return;
@@ -73,6 +92,53 @@ export function TeamManagement({ teams, currentUserId }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Create Team */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <Users className="w-5 h-5 text-indigo-500" />
+            Teams
+          </h2>
+          <button
+            onClick={() => setShowCreateTeam(!showCreateTeam)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition"
+          >
+            <Plus className="w-4 h-4" />
+            Create Team
+          </button>
+        </div>
+
+        {showCreateTeam && (
+          <div className="flex gap-3 mb-4">
+            <input
+              type="text"
+              value={newTeamName}
+              onChange={(e) => setNewTeamName(e.target.value)}
+              placeholder="Enter team name"
+              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreateTeam();
+                if (e.key === "Escape") setShowCreateTeam(false);
+              }}
+              autoFocus
+            />
+            <button
+              onClick={handleCreateTeam}
+              disabled={!newTeamName.trim() || isPending}
+              className="px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl hover:from-indigo-600 hover:to-purple-700 transition disabled:opacity-50 flex items-center gap-2"
+            >
+              {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
+            </button>
+            <button
+              onClick={() => { setShowCreateTeam(false); setNewTeamName(""); }}
+              className="px-3 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Invite */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">

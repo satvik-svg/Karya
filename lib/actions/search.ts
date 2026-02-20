@@ -31,6 +31,11 @@ export async function searchTasks(query: string) {
       project: { select: { id: true, name: true, color: true } },
       section: { select: { name: true } },
       assignee: { select: { id: true, name: true, avatar: true } },
+      assignees: {
+        include: {
+          user: { select: { id: true, name: true, avatar: true } },
+        },
+      },
     },
     orderBy: { updatedAt: "desc" },
     take: 20,
