@@ -31,6 +31,9 @@ model User {
   notifications  Notification[]
   goals          Goal[]         @relation("GoalOwner")
   sentInvites    ProjectInvite[] @relation("InviteSender")
+  ideas          Idea[]          @relation("IdeaCreator")
+  ideaComments   IdeaComment[]   @relation("IdeaCommentAuthor")
+  ideaVotes      IdeaVote[]      @relation("IdeaVoter")
 }
 
 model Team {
@@ -43,6 +46,7 @@ model Team {
   projects   Project[]
   portfolios Portfolio[]
   invites    ProjectInvite[]
+  ideas      Idea[]
 }
 
 model TeamMember {
@@ -273,4 +277,48 @@ model ProjectInvite {
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   team      Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
   invitedBy User    @relation("InviteSender", fields: [invitedById], references: [id])
+}
+
+model Idea {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  category    String   @default("general") // "general", "feature", "improvement", "bug", "other"
+  status      String   @default("new")     // "new", "under_review", "approved", "in_progress", "done", "archived"
+  upvotes     Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teamId    String
+  creatorId String
+
+  team     Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  creator  User          @relation("IdeaCreator", fields: [creatorId], references: [id])
+  comments IdeaComment[]
+  voters   IdeaVote[]
+}
+
+model IdeaComment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ideaId   String
+  authorId String
+
+  idea   Idea @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  author User @relation("IdeaCommentAuthor", fields: [authorId], references: [id])
+}
+
+model IdeaVote {
+  id        String   @id @default(uuid())
+  ideaId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  idea Idea @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  user User @relation("IdeaVoter", fields: [userId], references: [id])
+
+  @@unique([ideaId, userId])
 }
