@@ -1,0 +1,241 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String    @id @default(uuid())
+  name           String
+  email          String    @unique
+  hashedPassword String
+  avatar         String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  teamMembers    TeamMember[]
+  assignedTasks  Task[]         @relation("TaskAssignee")
+  createdTasks   Task[]         @relation("TaskCreator")
+  comments       Comment[]
+  attachments    Attachment[]
+  projects       Project[]      @relation("ProjectCreator")
+  subtasks       Subtask[]      @relation("SubtaskAssignee")
+  activities     ActivityLog[]
+  notifications  Notification[]
+  goals          Goal[]         @relation("GoalOwner")
+}
+
+model Team {
+  id        String       @id @default(uuid())
+  name      String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  members    TeamMember[]
+  projects   Project[]
+  portfolios Portfolio[]
+}
+
+model TeamMember {
+  id     String @id @default(uuid())
+  role   String @default("member") // "owner", "admin", "member", "guest"
+  userId String
+  teamId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  color       String   @default("#6366f1")
+  icon        String   @default("folder")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teamId    String
+  creatorId String
+
+  team       Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  creator    User        @relation("ProjectCreator", fields: [creatorId], references: [id])
+  sections   Section[]
+  tasks      Task[]
+  portfolios PortfolioProject[]
+}
+
+model Section {
+  id        String   @id @default(uuid())
+  name      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  priority    String    @default("medium") // "low", "medium", "high", "urgent"
+  status      String    @default("todo")   // "todo", "in_progress", "done"
+  dueDate     DateTime?
+  order       Int       @default(0)
+  completed   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  projectId  String
+  sectionId  String
+  assigneeId String?
+  creatorId  String
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  section     Section      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creator     User         @relation("TaskCreator", fields: [creatorId], references: [id])
+  comments    Comment[]
+  attachments Attachment[]
+  subtasks    Subtask[]
+  activities  ActivityLog[]
+  tags        TaskTag[]
+}
+
+model Subtask {
+  id        String   @id @default(uuid())
+  title     String
+  completed Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  taskId     String
+  assigneeId String?
+
+  task     Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  assignee User? @relation("SubtaskAssignee", fields: [assigneeId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  taskId   String
+  authorId String
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  filename  String
+  url       String
+  size      Int      @default(0)
+  mimeType  String   @default("application/octet-stream")
+  createdAt DateTime @default(now())
+
+  taskId       String
+  uploadedById String
+
+  task       Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  action    String   // "created", "updated", "completed", "commented", "assigned", "moved", etc.
+  details   String?  // JSON string with extra details
+  createdAt DateTime @default(now())
+
+  taskId String
+  userId String
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String   // "assigned", "commented", "mentioned", "completed", "due_soon"
+  message   String
+  read      Boolean  @default(false)
+  link      String?  // URL to navigate to
+  createdAt DateTime @default(now())
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Tag {
+  id    String @id @default(uuid())
+  name  String @unique
+  color String @default("#6b7280")
+
+  tasks TaskTag[]
+}
+
+model TaskTag {
+  id     String @id @default(uuid())
+  taskId String
+  tagId  String
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, tagId])
+}
+
+model Goal {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  status      String    @default("on_track") // "on_track", "at_risk", "off_track", "completed"
+  progress    Int       @default(0) // 0-100
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  ownerId String
+
+  owner User @relation("GoalOwner", fields: [ownerId], references: [id])
+}
+
+model Portfolio {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  color       String   @default("#6366f1")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teamId String
+
+  team     Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  projects PortfolioProject[]
+}
+
+model PortfolioProject {
+  id          String @id @default(uuid())
+  portfolioId String
+  projectId   String
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, projectId])
+}
