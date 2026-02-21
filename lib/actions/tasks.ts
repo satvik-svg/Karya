@@ -2,7 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { after } from "next/server";
 
 async function getCurrentUserId() {
   const session = await auth();
@@ -17,7 +18,6 @@ async function getCurrentUser() {
 }
 
 export async function createTask(formData: FormData) {
-  const user = await getCurrentUser();
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
   const projectId = formData.get("projectId") as string;
@@ -36,10 +36,11 @@ export async function createTask(formData: FormData) {
     return { error: "Title, project, and section are required" };
   }
 
-  const lastTask = await prisma.task.findFirst({
-    where: { sectionId },
-    orderBy: { order: "desc" },
-  });
+  // Parallel: user auth + last task order
+  const [user, lastTask] = await Promise.all([
+    getCurrentUser(),
+    prisma.task.findFirst({ where: { sectionId }, orderBy: { order: "desc" } }),
+  ]);
 
   const task = await prisma.task.create({
     data: {
@@ -60,30 +61,27 @@ export async function createTask(formData: FormData) {
     },
   });
 
-  // Log activity
-  await prisma.activityLog.create({
-    data: {
-      action: "created",
-      details: JSON.stringify({ title }),
-      taskId: task.id,
-      userId: user.id,
-    },
+  // Fire-and-forget: don't block the response for logs/notifications
+  after(async () => {
+    const notifyIds = validAssigneeIds.filter((id) => id !== user.id);
+    await Promise.all([
+      prisma.activityLog.create({
+        data: { action: "created", details: JSON.stringify({ title }), taskId: task.id, userId: user.id },
+      }),
+      notifyIds.length > 0
+        ? prisma.notification.createMany({
+            data: notifyIds.map((assigneeId) => ({
+              type: "assigned",
+              message: `${user.name} assigned you to "${title}"`,
+              link: `/dashboard/projects/${projectId}`,
+              userId: assigneeId,
+            })),
+          })
+        : Promise.resolve(),
+    ]);
   });
 
-  // Notify assignees
-  for (const assigneeId of validAssigneeIds) {
-    if (assigneeId !== user.id) {
-      await prisma.notification.create({
-        data: {
-          type: "assigned",
-          message: `${user.name} assigned you to "${title}"`,
-          link: `/dashboard/projects/${projectId}`,
-          userId: assigneeId,
-        },
-      });
-    }
-  }
-
+  revalidateTag(`project-${projectId}`, "max");
   revalidatePath(`/dashboard/projects/${projectId}`);
   return { success: true };
 }
@@ -101,8 +99,11 @@ export async function updateTask(taskId: string, data: {
   order?: number;
   completed?: boolean;
 }) {
-  const user = await getCurrentUser();
-  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  // Parallel: fetch user session + task at the same time
+  const [user, task] = await Promise.all([
+    getCurrentUser(),
+    prisma.task.findUnique({ where: { id: taskId } }),
+  ]);
   if (!task) return { error: "Task not found" };
 
   await prisma.task.update({
@@ -118,62 +119,62 @@ export async function updateTask(taskId: string, data: {
     },
   });
 
-  // Log activity for significant changes
-  if (data.completed !== undefined) {
-    await prisma.activityLog.create({
-      data: {
-        action: data.completed ? "completed" : "uncompleted",
-        taskId,
-        userId: user.id,
-      },
-    });
+  // Fire-and-forget: activity logs + notifications don't block the response
+  after(async () => {
+    const logAndNotify: Promise<unknown>[] = [];
 
-    // Notify task creator if someone else completed it
-    if (data.completed && task.creatorId !== user.id) {
-      await prisma.notification.create({
-        data: {
-          type: "completed",
-          message: `${user.name} completed "${task.title}"`,
-          link: `/dashboard/projects/${task.projectId}`,
-          userId: task.creatorId,
-        },
-      });
+    if (data.completed !== undefined) {
+      logAndNotify.push(
+        prisma.activityLog.create({
+          data: { action: data.completed ? "completed" : "uncompleted", taskId, userId: user.id },
+        })
+      );
+      if (data.completed && task.creatorId !== user.id) {
+        logAndNotify.push(
+          prisma.notification.create({
+            data: {
+              type: "completed",
+              message: `${user.name} completed "${task.title}"`,
+              link: `/dashboard/projects/${task.projectId}`,
+              userId: task.creatorId,
+            },
+          })
+        );
+      }
     }
-  }
 
-  if (data.assigneeId !== undefined && data.assigneeId !== task.assigneeId) {
-    await prisma.activityLog.create({
-      data: {
-        action: "assigned",
-        details: JSON.stringify({ assigneeId: data.assigneeId }),
-        taskId,
-        userId: user.id,
-      },
-    });
-
-    if (data.assigneeId && data.assigneeId !== user.id) {
-      await prisma.notification.create({
-        data: {
-          type: "assigned",
-          message: `${user.name} assigned you to "${task.title}"`,
-          link: `/dashboard/projects/${task.projectId}`,
-          userId: data.assigneeId,
-        },
-      });
+    if (data.assigneeId !== undefined && data.assigneeId !== task.assigneeId) {
+      logAndNotify.push(
+        prisma.activityLog.create({
+          data: { action: "assigned", details: JSON.stringify({ assigneeId: data.assigneeId }), taskId, userId: user.id },
+        })
+      );
+      if (data.assigneeId && data.assigneeId !== user.id) {
+        logAndNotify.push(
+          prisma.notification.create({
+            data: {
+              type: "assigned",
+              message: `${user.name} assigned you to "${task.title}"`,
+              link: `/dashboard/projects/${task.projectId}`,
+              userId: data.assigneeId,
+            },
+          })
+        );
+      }
     }
-  }
 
-  if (data.priority && data.priority !== task.priority) {
-    await prisma.activityLog.create({
-      data: {
-        action: "updated",
-        details: JSON.stringify({ field: "priority", from: task.priority, to: data.priority }),
-        taskId,
-        userId: user.id,
-      },
-    });
-  }
+    if (data.priority && data.priority !== task.priority) {
+      logAndNotify.push(
+        prisma.activityLog.create({
+          data: { action: "updated", details: JSON.stringify({ field: "priority", from: task.priority, to: data.priority }), taskId, userId: user.id },
+        })
+      );
+    }
 
+    if (logAndNotify.length > 0) await Promise.all(logAndNotify);
+  });
+
+  revalidateTag(`project-${task.projectId}`, "max");
   revalidatePath(`/dashboard/projects/${task.projectId}`);
   revalidatePath("/dashboard/my-tasks");
   return { success: true };
@@ -184,20 +185,20 @@ export async function deleteTask(taskId: string) {
   if (!task) return { error: "Task not found" };
 
   await prisma.task.delete({ where: { id: taskId } });
+  revalidateTag(`project-${task.projectId}`, "max");
   revalidatePath(`/dashboard/projects/${task.projectId}`);
   revalidatePath("/dashboard/my-tasks");
   return { success: true };
 }
 
 export async function moveTask(taskId: string, newSectionId: string, newOrder: number) {
-  const user = await getCurrentUser();
-  const task = await prisma.task.findUnique({
-    where: { id: taskId },
-    include: { section: true },
-  });
+  // Parallel: get user, task, and new section all at once
+  const [user, task, newSection] = await Promise.all([
+    getCurrentUser(),
+    prisma.task.findUnique({ where: { id: taskId }, include: { section: true } }),
+    prisma.section.findUnique({ where: { id: newSectionId } }),
+  ]);
   if (!task) return;
-
-  const newSection = await prisma.section.findUnique({ where: { id: newSectionId } });
 
   await prisma.task.update({
     where: { id: taskId },
@@ -205,16 +206,19 @@ export async function moveTask(taskId: string, newSectionId: string, newOrder: n
   });
 
   if (task.sectionId !== newSectionId && newSection) {
-    await prisma.activityLog.create({
-      data: {
-        action: "moved",
-        details: JSON.stringify({ from: task.section.name, to: newSection.name }),
-        taskId,
-        userId: user.id,
-      },
-    });
+    after(() =>
+      prisma.activityLog.create({
+        data: {
+          action: "moved",
+          details: JSON.stringify({ from: task.section.name, to: newSection.name }),
+          taskId,
+          userId: user.id,
+        },
+      })
+    );
   }
 
+  revalidateTag(`project-${task.projectId}`, "max");
   revalidatePath(`/dashboard/projects/${task.projectId}`);
 }
 
@@ -292,14 +296,13 @@ export async function getFilteredTasks(projectId: string, filters: {
 }
 
 export async function addTaskAssignee(taskId: string, userId: string) {
-  const user = await getCurrentUser();
-  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  // Parallel: user auth + task lookup + existing assignee check
+  const [user, task, existing] = await Promise.all([
+    getCurrentUser(),
+    prisma.task.findUnique({ where: { id: taskId } }),
+    prisma.taskAssignee.findUnique({ where: { taskId_userId: { taskId, userId } } }),
+  ]);
   if (!task) return { error: "Task not found" };
-
-  // Check if already assigned
-  const existing = await prisma.taskAssignee.findUnique({
-    where: { taskId_userId: { taskId, userId } },
-  });
   if (existing) return { error: "User already assigned" };
 
   await prisma.taskAssignee.create({
@@ -314,36 +317,38 @@ export async function addTaskAssignee(taskId: string, userId: string) {
     });
   }
 
-  // Log activity
-  await prisma.activityLog.create({
-    data: {
-      action: "assigned",
-      details: JSON.stringify({ assigneeId: userId }),
-      taskId,
-      userId: user.id,
-    },
+  after(async () => {
+    const jobs: Promise<unknown>[] = [
+      prisma.activityLog.create({
+        data: { action: "assigned", details: JSON.stringify({ assigneeId: userId }), taskId, userId: user.id },
+      }),
+    ];
+    if (userId !== user.id) {
+      jobs.push(
+        prisma.notification.create({
+          data: {
+            type: "assigned",
+            message: `${user.name} assigned you to "${task.title}"`,
+            link: `/dashboard/projects/${task.projectId}`,
+            userId,
+          },
+        })
+      );
+    }
+    await Promise.all(jobs);
   });
 
-  // Notify
-  if (userId !== user.id) {
-    await prisma.notification.create({
-      data: {
-        type: "assigned",
-        message: `${user.name} assigned you to "${task.title}"`,
-        link: `/dashboard/projects/${task.projectId}`,
-        userId,
-      },
-    });
-  }
-
+  revalidateTag(`project-${task.projectId}`, "max");
   revalidatePath(`/dashboard/projects/${task.projectId}`);
   revalidatePath("/dashboard/my-tasks");
   return { success: true };
 }
 
 export async function removeTaskAssignee(taskId: string, userId: string) {
-  const user = await getCurrentUser();
-  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  const [user, task] = await Promise.all([
+    getCurrentUser(),
+    prisma.task.findUnique({ where: { id: taskId } }),
+  ]);
   if (!task) return { error: "Task not found" };
 
   await prisma.taskAssignee.deleteMany({
@@ -361,26 +366,23 @@ export async function removeTaskAssignee(taskId: string, userId: string) {
     });
   }
 
-  await prisma.activityLog.create({
-    data: {
-      action: "assigned",
-      details: JSON.stringify({ removed: userId }),
-      taskId,
-      userId: user.id,
-    },
-  });
+  after(() =>
+    prisma.activityLog.create({
+      data: { action: "assigned", details: JSON.stringify({ removed: userId }), taskId, userId: user.id },
+    })
+  );
 
+  revalidateTag(`project-${task.projectId}`, "max");
   revalidatePath(`/dashboard/projects/${task.projectId}`);
   revalidatePath("/dashboard/my-tasks");
   return { success: true };
 }
 
 export async function updateTaskAssignees(taskId: string, userIds: string[]) {
-  const user = await getCurrentUser();
-  const task = await prisma.task.findUnique({
-    where: { id: taskId },
-    include: { assignees: true },
-  });
+  const [user, task] = await Promise.all([
+    getCurrentUser(),
+    prisma.task.findUnique({ where: { id: taskId }, include: { assignees: true } }),
+  ]);
   if (!task) return { error: "Task not found" };
 
   const currentIds = task.assignees.map((a) => a.userId);
@@ -408,30 +410,26 @@ export async function updateTaskAssignees(taskId: string, userIds: string[]) {
     data: { assigneeId: primaryAssignee },
   });
 
-  // Log activity
-  await prisma.activityLog.create({
-    data: {
-      action: "assigned",
-      details: JSON.stringify({ assignees: userIds }),
-      taskId,
-      userId: user.id,
-    },
+  after(async () => {
+    const notifyIds = toAdd.filter((id) => id !== user.id);
+    await Promise.all([
+      prisma.activityLog.create({
+        data: { action: "assigned", details: JSON.stringify({ assignees: userIds }), taskId, userId: user.id },
+      }),
+      notifyIds.length > 0
+        ? prisma.notification.createMany({
+            data: notifyIds.map((uid) => ({
+              type: "assigned",
+              message: `${user.name} assigned you to "${task.title}"`,
+              link: `/dashboard/projects/${task.projectId}`,
+              userId: uid,
+            })),
+          })
+        : Promise.resolve(),
+    ]);
   });
 
-  // Notify new assignees
-  for (const userId of toAdd) {
-    if (userId !== user.id) {
-      await prisma.notification.create({
-        data: {
-          type: "assigned",
-          message: `${user.name} assigned you to "${task.title}"`,
-          link: `/dashboard/projects/${task.projectId}`,
-          userId,
-        },
-      });
-    }
-  }
-
+  revalidateTag(`project-${task.projectId}`, "max");
   revalidatePath(`/dashboard/projects/${task.projectId}`);
   revalidatePath("/dashboard/my-tasks");
   return { success: true };

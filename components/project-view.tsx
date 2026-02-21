@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { KanbanBoard } from "./kanban-board";
 import { ListView } from "./list-view";
 import { TaskDetailModal } from "./task-detail-modal";
@@ -66,6 +67,14 @@ interface Props {
 }
 
 export function ProjectView({ project, teamMembers, currentUserId }: Props) {
+  const router = useRouter();
+
+  // Auto-refresh every 30 seconds so collaborators see live updates
+  useEffect(() => {
+    const id = setInterval(() => router.refresh(), 30_000);
+    return () => clearInterval(id);
+  }, [router]);
+
   const [view, setView] = useState<"board" | "list">("board");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showCreateTask, setShowCreateTask] = useState(false);

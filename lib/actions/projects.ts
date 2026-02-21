@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 
 async function getCurrentUserId() {
   const session = await auth();
@@ -50,6 +50,7 @@ export async function updateProject(projectId: string, formData: FormData) {
     data: { name, description, color },
   });
 
+  revalidateTag(`project-${projectId}`, "max");
   revalidatePath(`/dashboard/projects/${projectId}`);
   revalidatePath("/dashboard");
 }
@@ -79,37 +80,42 @@ export async function getProjects() {
 }
 
 export async function getProject(projectId: string) {
-  return prisma.project.findUnique({
-    where: { id: projectId },
-    include: {
-      sections: {
-        orderBy: { order: "asc" },
+  return unstable_cache(
+    () =>
+      prisma.project.findUnique({
+        where: { id: projectId },
         include: {
-          tasks: {
+          sections: {
             orderBy: { order: "asc" },
             include: {
-              assignee: { select: { id: true, name: true, avatar: true, email: true } },
-              assignees: {
+              tasks: {
+                orderBy: { order: "asc" },
                 include: {
-                  user: { select: { id: true, name: true, avatar: true, email: true } },
+                  assignee: { select: { id: true, name: true, avatar: true, email: true } },
+                  assignees: {
+                    include: {
+                      user: { select: { id: true, name: true, avatar: true, email: true } },
+                    },
+                  },
+                  _count: { select: { comments: true, attachments: true } },
                 },
               },
-              _count: { select: { comments: true, attachments: true } },
             },
           },
-        },
-      },
-      team: {
-        include: {
-          members: {
+          team: {
             include: {
-              user: { select: { id: true, name: true, email: true, avatar: true } },
+              members: {
+                include: {
+                  user: { select: { id: true, name: true, email: true, avatar: true } },
+                },
+              },
             },
           },
         },
-      },
-    },
-  });
+      }),
+    ["getProject", projectId],
+    { tags: [`project-${projectId}`] }
+  )();
 }
 
 export async function createSection(projectId: string, name: string) {
@@ -126,10 +132,12 @@ export async function createSection(projectId: string, name: string) {
     },
   });
 
+  revalidateTag(`project-${projectId}`, "max");
   revalidatePath(`/dashboard/projects/${projectId}`);
 }
 
 export async function deleteSection(sectionId: string, projectId: string) {
   await prisma.section.delete({ where: { id: sectionId } });
+  revalidateTag(`project-${projectId}`, "max");
   revalidatePath(`/dashboard/projects/${projectId}`);
 }
