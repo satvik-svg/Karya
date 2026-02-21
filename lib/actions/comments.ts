@@ -2,7 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { after } from "next/server";
 
 async function getCurrentUser() {
   const session = await auth();
@@ -26,40 +27,31 @@ export async function addComment(taskId: string, content: string) {
 
   const task = await prisma.task.findUnique({ where: { id: taskId } });
   if (task) {
-    // Log activity
-    await prisma.activityLog.create({
-      data: {
-        action: "commented",
-        details: JSON.stringify({ content: content.substring(0, 100) }),
-        taskId,
-        userId: user.id,
-      },
+    // Fire-and-forget logs + notifications so the response isn't blocked
+    after(async () => {
+      const jobs: Promise<unknown>[] = [
+        prisma.activityLog.create({
+          data: { action: "commented", details: JSON.stringify({ content: content.substring(0, 100) }), taskId, userId: user.id },
+        }),
+      ];
+      if (task.creatorId !== user.id) {
+        jobs.push(
+          prisma.notification.create({
+            data: { type: "commented", message: `${user.name} commented on "${task.title}"`, link: `/dashboard/projects/${task.projectId}`, userId: task.creatorId },
+          })
+        );
+      }
+      if (task.assigneeId && task.assigneeId !== user.id && task.assigneeId !== task.creatorId) {
+        jobs.push(
+          prisma.notification.create({
+            data: { type: "commented", message: `${user.name} commented on "${task.title}"`, link: `/dashboard/projects/${task.projectId}`, userId: task.assigneeId },
+          })
+        );
+      }
+      await Promise.all(jobs);
     });
 
-    // Notify task creator if someone else comments
-    if (task.creatorId !== user.id) {
-      await prisma.notification.create({
-        data: {
-          type: "commented",
-          message: `${user.name} commented on "${task.title}"`,
-          link: `/dashboard/projects/${task.projectId}`,
-          userId: task.creatorId,
-        },
-      });
-    }
-
-    // Notify assignee if different from commenter and creator
-    if (task.assigneeId && task.assigneeId !== user.id && task.assigneeId !== task.creatorId) {
-      await prisma.notification.create({
-        data: {
-          type: "commented",
-          message: `${user.name} commented on "${task.title}"`,
-          link: `/dashboard/projects/${task.projectId}`,
-          userId: task.assigneeId,
-        },
-      });
-    }
-
+    revalidateTag(`project-${task.projectId}`, "max");
     revalidatePath(`/dashboard/projects/${task.projectId}`);
   }
 
@@ -74,6 +66,7 @@ export async function deleteComment(commentId: string) {
   if (!comment) return;
 
   await prisma.comment.delete({ where: { id: commentId } });
+  revalidateTag(`project-${comment.task.projectId}`, "max");
   revalidatePath(`/dashboard/projects/${comment.task.projectId}`);
 }
 
@@ -95,14 +88,12 @@ export async function addAttachment(taskId: string, data: {
 
   const task = await prisma.task.findUnique({ where: { id: taskId } });
   if (task) {
-    await prisma.activityLog.create({
-      data: {
-        action: "attachment_added",
-        details: JSON.stringify({ filename: data.filename }),
-        taskId,
-        userId: user.id,
-      },
-    });
+    after(() =>
+      prisma.activityLog.create({
+        data: { action: "attachment_added", details: JSON.stringify({ filename: data.filename }), taskId, userId: user.id },
+      })
+    );
+    revalidateTag(`project-${task.projectId}`, "max");
     revalidatePath(`/dashboard/projects/${task.projectId}`);
   }
 
@@ -117,5 +108,6 @@ export async function deleteAttachment(attachmentId: string) {
   if (!attachment) return;
 
   await prisma.attachment.delete({ where: { id: attachmentId } });
+  revalidateTag(`project-${attachment.task.projectId}`, "max");
   revalidatePath(`/dashboard/projects/${attachment.task.projectId}`);
 }

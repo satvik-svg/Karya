@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { sendInviteEmail } from "@/lib/email";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://anant-ivory.vercel.app";
 
@@ -59,6 +59,7 @@ export async function addUserToProjectTeam(projectId: string, userId: string) {
     },
   });
 
+  revalidateTag(`project-${projectId}`, "max");
   revalidatePath(`/dashboard/projects/${projectId}`);
   revalidatePath("/dashboard/team");
   return { success: true };
@@ -202,6 +203,7 @@ export async function acceptInvite(token: string): Promise<{ success?: boolean; 
       },
     });
 
+    revalidateTag(`project-${invite.projectId}`, "max");
     revalidatePath(`/dashboard/projects/${invite.projectId}`);
     revalidatePath("/dashboard/team");
     revalidatePath("/dashboard");

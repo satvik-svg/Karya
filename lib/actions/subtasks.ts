@@ -2,7 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { after } from "next/server";
 
 async function getCurrentUserId() {
   const session = await auth();
@@ -29,16 +30,13 @@ export async function createSubtask(taskId: string, title: string) {
     },
   });
 
-  // Log activity
-  await prisma.activityLog.create({
-    data: {
-      action: "subtask_added",
-      details: JSON.stringify({ subtaskTitle: title }),
-      taskId,
-      userId,
-    },
-  });
+  after(() =>
+    prisma.activityLog.create({
+      data: { action: "subtask_added", details: JSON.stringify({ subtaskTitle: title }), taskId, userId },
+    })
+  );
 
+  revalidateTag(`project-${task.projectId}`, "max");
   revalidatePath(`/dashboard/projects/${task.projectId}`);
   return { success: true, subtask };
 }
@@ -57,15 +55,18 @@ export async function toggleSubtask(subtaskId: string) {
     data: { completed: !subtask.completed },
   });
 
-  await prisma.activityLog.create({
-    data: {
-      action: subtask.completed ? "subtask_uncompleted" : "subtask_completed",
-      details: JSON.stringify({ subtaskTitle: subtask.title }),
-      taskId: subtask.taskId,
-      userId,
-    },
-  });
+  after(() =>
+    prisma.activityLog.create({
+      data: {
+        action: subtask.completed ? "subtask_uncompleted" : "subtask_completed",
+        details: JSON.stringify({ subtaskTitle: subtask.title }),
+        taskId: subtask.taskId,
+        userId,
+      },
+    })
+  );
 
+  revalidateTag(`project-${subtask.task.projectId}`, "max");
   revalidatePath(`/dashboard/projects/${subtask.task.projectId}`);
   return { success: true };
 }
@@ -78,6 +79,7 @@ export async function deleteSubtask(subtaskId: string) {
   if (!subtask) return { error: "Subtask not found" };
 
   await prisma.subtask.delete({ where: { id: subtaskId } });
+  revalidateTag(`project-${subtask.task.projectId}`, "max");
   revalidatePath(`/dashboard/projects/${subtask.task.projectId}`);
   return { success: true };
 }
@@ -94,6 +96,7 @@ export async function updateSubtask(subtaskId: string, data: { title?: string; a
     data,
   });
 
+  revalidateTag(`project-${subtask.task.projectId}`, "max");
   revalidatePath(`/dashboard/projects/${subtask.task.projectId}`);
   return { success: true };
 }
