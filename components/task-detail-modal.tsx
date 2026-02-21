@@ -7,6 +7,7 @@ import { createSubtask, toggleSubtask, deleteSubtask } from "@/lib/actions/subta
 import { getTaskActivities } from "@/lib/actions/activity";
 import { addTagToTask, removeTagFromTask, createTag, getTags } from "@/lib/actions/tags";
 import { format } from "date-fns";
+import { getAvatarColor } from "@/lib/avatar-color";
 import {
   X,
   Calendar,
@@ -96,10 +97,10 @@ interface FullTask {
 }
 
 const PRIORITY_STYLES: Record<string, string> = {
-  urgent: "text-red-600 bg-red-50 border-red-200",
-  high: "text-orange-600 bg-orange-50 border-orange-200",
-  medium: "text-yellow-600 bg-yellow-50 border-yellow-200",
-  low: "text-blue-600 bg-blue-50 border-blue-200",
+  urgent: "text-red-400 bg-red-500/15 border-red-500/25",
+  high: "text-orange-400 bg-orange-500/15 border-orange-500/25",
+  medium: "text-yellow-400 bg-yellow-500/15 border-yellow-500/25",
+  low: "text-blue-400 bg-blue-500/15 border-blue-500/25",
 };
 
 const ACTIVITY_LABELS: Record<string, string> = {
@@ -305,10 +306,10 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[85vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1C1C1E] border border-white/8 rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[85vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/8">
+          <div className="flex items-center gap-2 text-sm text-gray-400">
             {task && (
               <>
                 <span>{task.project.name}</span>
@@ -320,14 +321,14 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
           <div className="flex items-center gap-2">
             <button
               onClick={handleDeleteTask}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+              className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition"
               title="Delete task"
             >
               <Trash2 className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
+              className="p-1.5 rounded-lg hover:bg-white/8 text-gray-400"
             >
               <X className="w-5 h-5" />
             </button>
@@ -338,7 +339,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+              <Loader2 className="w-6 h-6 text-[#6B7A2A] animate-spin" />
             </div>
           ) : task ? (
             <div className="p-6 space-y-6">
@@ -349,19 +350,19 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                     <input
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
-                      className="w-full text-xl font-semibold px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full text-xl font-semibold px-3 py-2 bg-white/5 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-[#6B7A2A] outline-none"
                     />
                     <textarea
                       value={editDescription}
                       onChange={(e) => setEditDescription(e.target.value)}
                       rows={3}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                      className="w-full px-3 py-2 text-sm bg-white/5 border border-white/10 text-white placeholder:text-gray-500 rounded-xl focus:ring-2 focus:ring-[#6B7A2A] outline-none resize-none"
                       placeholder="Add description..."
                     />
                     <div className="flex gap-2">
                       <button
                         onClick={handleSaveEdit}
-                        className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-500 rounded-lg hover:bg-indigo-600"
+                        className="px-3 py-1.5 text-sm font-medium text-white bg-[#6B7A2A] rounded-lg hover:bg-[#8B9A35]"
                       >
                         Save
                       </button>
@@ -371,7 +372,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                           setEditTitle(task.title);
                           setEditDescription(task.description || "");
                         }}
-                        className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700"
+                        className="px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-gray-300"
                       >
                         Cancel
                       </button>
@@ -395,7 +396,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                       <div className="flex-1">
                         <h2
                           className={`text-xl font-semibold ${
-                            task.completed ? "line-through text-gray-400" : "text-gray-900"
+                            task.completed ? "line-through text-gray-400" : "text-white"
                           }`}
                         >
                           {task.title}
@@ -407,7 +408,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                           </button>
                         </h2>
                         {task.description && (
-                          <p className="text-sm text-gray-500 mt-1">{task.description}</p>
+                          <p className="text-sm text-gray-400 mt-1">{task.description}</p>
                         )}
                       </div>
                     </div>
@@ -432,38 +433,38 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                 <div className="relative">
                   <button
                     onClick={() => setShowTagDropdown(!showTagDropdown)}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-gray-400 hover:text-gray-600 border border-dashed border-gray-300 rounded-full hover:border-gray-400 transition"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-gray-400 hover:text-gray-300 border border-dashed border-white/15 rounded-full hover:border-white/25 transition"
                   >
                     <Tag className="w-3 h-3" />
                     Add tag
                   </button>
                   {showTagDropdown && (
-                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-48 p-2">
+                    <div className="absolute top-full left-0 mt-1 bg-[#252525] border border-white/8 rounded-lg shadow-lg z-10 w-48 p-2">
                       {allTags
                         .filter((t) => !(task.tags || []).some((tt) => tt.tag.id === t.id))
                         .map((tag) => (
                           <button
                             key={tag.id}
                             onClick={() => handleAddTag(tag.id)}
-                            className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
+                            className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-gray-300 hover:bg-white/5 rounded-md"
                           >
                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }} />
                             {tag.name}
                           </button>
                         ))}
-                      <div className="border-t border-gray-100 mt-1 pt-1">
+                      <div className="border-t border-white/8 mt-1 pt-1">
                         <div className="flex gap-1">
                           <input
                             value={newTagName}
                             onChange={(e) => setNewTagName(e.target.value)}
                             placeholder="New tag..."
-                            className="flex-1 px-2 py-1 text-xs border border-gray-200 rounded outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="flex-1 px-2 py-1 text-xs bg-white/5 border border-white/10 text-white placeholder:text-gray-500 rounded outline-none focus:ring-1 focus:ring-[#6B7A2A]"
                             onKeyDown={(e) => { if (e.key === "Enter") handleCreateAndAddTag(); }}
                           />
                           <button
                             onClick={handleCreateAndAddTag}
                             disabled={!newTagName.trim()}
-                            className="px-2 py-1 text-xs text-white bg-indigo-500 rounded hover:bg-indigo-600 disabled:opacity-50"
+                            className="px-2 py-1 text-xs text-white bg-[#6B7A2A] rounded hover:bg-[#8B9A35] disabled:opacity-50"
                           >
                             Add
                           </button>
@@ -475,17 +476,17 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
               </div>
 
               {/* Properties */}
-              <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
+              <div className="grid grid-cols-2 gap-4 bg-white/5 rounded-xl p-4">
                 {/* Assignee */}
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-400 mb-1.5">
                     <User className="w-3.5 h-3.5" />
                     Assignee
                   </label>
                   <select
                     value={task.assignee?.id || ""}
                     onChange={(e) => handleUpdateAssignee(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-2.5 py-1.5 text-sm bg-[#1C1C1E] border border-white/10 text-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B7A2A] outline-none"
                   >
                     <option value="">Unassigned</option>
                     {teamMembers.map((m) => (
@@ -498,7 +499,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
 
                 {/* Due Date */}
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-400 mb-1.5">
                     <Calendar className="w-3.5 h-3.5" />
                     Due Date
                   </label>
@@ -506,20 +507,20 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                     type="date"
                     value={task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : ""}
                     onChange={(e) => handleUpdateDueDate(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-2.5 py-1.5 text-sm bg-[#1C1C1E] border border-white/10 text-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B7A2A] outline-none"
                   />
                 </div>
 
                 {/* Priority */}
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-400 mb-1.5">
                     <AlertCircle className="w-3.5 h-3.5" />
                     Priority
                   </label>
                   <select
                     value={task.priority}
                     onChange={(e) => handleUpdatePriority(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-2.5 py-1.5 text-sm bg-[#1C1C1E] border border-white/10 text-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B7A2A] outline-none"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -530,18 +531,18 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
 
                 {/* Created */}
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-400 mb-1.5">
                     <Clock className="w-3.5 h-3.5" />
                     Created
                   </label>
-                  <p className="text-sm text-gray-700 px-2.5 py-1.5">
+                  <p className="text-sm text-gray-300 px-2.5 py-1.5">
                     {format(new Date(task.createdAt), "MMM d, yyyy")} by {task.creator.name}
                   </p>
                 </div>
               </div>
 
               {/* Tabs */}
-              <div className="border-b border-gray-200">
+              <div className="border-b border-white/8">
                 <div className="flex gap-4">
                   {[
                     { key: "subtasks" as const, label: "Subtasks", icon: ListTodo, count: (task.subtasks || []).length },
@@ -557,14 +558,14 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                       }}
                       className={`flex items-center gap-1.5 px-1 py-2 text-sm font-medium border-b-2 transition ${
                         activeTab === tab.key
-                          ? "border-indigo-500 text-indigo-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700"
+                          ? "border-[#6B7A2A] text-[#8B9A35]"
+                          : "border-transparent text-gray-400 hover:text-gray-300"
                       }`}
                     >
                       <tab.icon className="w-4 h-4" />
                       {tab.label}
                       {tab.count !== null && tab.count > 0 && (
-                        <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">{tab.count}</span>
+                        <span className="text-xs bg-white/10 text-gray-400 px-1.5 py-0.5 rounded-full">{tab.count}</span>
                       )}
                     </button>
                   ))}
@@ -577,7 +578,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                   <div className="space-y-1 mb-3">
                     {(task.subtasks || []).length > 0 && (
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                        <div className="flex-1 bg-white/10 rounded-full h-1.5">
                           <div
                             className="bg-green-500 h-1.5 rounded-full transition-all"
                             style={{
@@ -585,7 +586,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                             }}
                           />
                         </div>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-400">
                           {(task.subtasks || []).filter((s) => s.completed).length}/{(task.subtasks || []).length}
                         </span>
                       </div>
@@ -598,7 +599,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                         >
                           {subtask.completed ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
                         </button>
-                        <span className={`flex-1 text-sm ${subtask.completed ? "line-through text-gray-400" : "text-gray-700"}`}>
+                        <span className={`flex-1 text-sm ${subtask.completed ? "line-through text-gray-400" : "text-gray-300"}`}>
                           {subtask.title}
                         </span>
                         <button
@@ -616,7 +617,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                         value={newSubtaskTitle}
                         onChange={(e) => setNewSubtaskTitle(e.target.value)}
                         placeholder="Subtask title..."
-                        className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        className="flex-1 px-3 py-1.5 text-sm bg-white/5 border border-white/10 text-white placeholder:text-gray-500 rounded-lg focus:ring-2 focus:ring-[#6B7A2A] outline-none"
                         autoFocus
                         onKeyDown={(e) => {
                           if (e.key === "Enter") handleAddSubtask();
@@ -626,7 +627,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                       <button
                         onClick={handleAddSubtask}
                         disabled={!newSubtaskTitle.trim()}
-                        className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-500 rounded-lg hover:bg-indigo-600 disabled:opacity-50"
+                        className="px-3 py-1.5 text-sm font-medium text-white bg-[#6B7A2A] rounded-lg hover:bg-[#8B9A35] disabled:opacity-50"
                       >
                         Add
                       </button>
@@ -634,7 +635,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                   ) : (
                     <button
                       onClick={() => setShowAddSubtask(true)}
-                      className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition"
+                      className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-300 transition"
                     >
                       <Plus className="w-4 h-4" />
                       Add subtask
@@ -649,12 +650,15 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                   <div className="space-y-3 mb-4">
                     {task.comments.map((comment) => (
                       <div key={comment.id} className="flex gap-3 group">
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-medium shrink-0 mt-0.5">
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-medium shrink-0 mt-0.5"
+                          style={{ backgroundColor: getAvatarColor(comment.author.name) }}
+                        >
                           {comment.author.name[0].toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-900">{comment.author.name}</span>
+                            <span className="text-sm font-medium text-white">{comment.author.name}</span>
                             <span className="text-xs text-gray-400">{format(new Date(comment.createdAt), "MMM d, h:mm a")}</span>
                             {comment.author.id === currentUserId && (
                               <button
@@ -665,7 +669,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                               </button>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 mt-0.5">{comment.content}</p>
+                          <p className="text-sm text-gray-400 mt-0.5">{comment.content}</p>
                         </div>
                       </div>
                     ))}
@@ -678,7 +682,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
                       placeholder="Write a comment..."
-                      className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                      className="flex-1 px-3 py-2 text-sm bg-white/5 border border-white/10 text-white placeholder:text-gray-500 rounded-xl focus:ring-2 focus:ring-[#6B7A2A] focus:border-transparent outline-none"
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
@@ -689,7 +693,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                     <button
                       onClick={handleAddComment}
                       disabled={!commentText.trim() || isPending}
-                      className="p-2 text-white bg-indigo-500 rounded-xl hover:bg-indigo-600 disabled:opacity-50 transition"
+                      className="p-2 text-white bg-[#6B7A2A] rounded-xl hover:bg-[#8B9A35] disabled:opacity-50 transition"
                     >
                       {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     </button>
@@ -702,14 +706,14 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                 <div>
                   <div className="space-y-2 mb-4">
                     {task.attachments.map((att) => (
-                      <div key={att.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
+                      <div key={att.id} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg group">
                         <Paperclip className="w-4 h-4 text-gray-400 shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-700 truncate">{att.filename}</p>
+                          <p className="text-sm font-medium text-gray-300 truncate">{att.filename}</p>
                           <p className="text-xs text-gray-400">{(att.size / 1024).toFixed(1)} KB · {att.uploadedBy.name}</p>
                         </div>
                         {att.url.startsWith("data:") && (
-                          <a href={att.url} download={att.filename} className="text-xs text-indigo-500 hover:text-indigo-700">Download</a>
+                          <a href={att.url} download={att.filename} className="text-xs text-[#8B9A35] hover:text-[#6B7A2A]">Download</a>
                         )}
                         <button
                           onClick={() => handleDeleteAttachment(att.id)}
@@ -723,7 +727,7 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                       <p className="text-sm text-gray-400">No files attached yet.</p>
                     )}
                   </div>
-                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 cursor-pointer transition">
+                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-300 border border-dashed border-white/15 rounded-lg hover:border-white/25 cursor-pointer transition">
                     <Upload className="w-4 h-4" />
                     Upload file
                     <input type="file" className="hidden" onChange={handleFileUpload} />
@@ -741,12 +745,15 @@ export function TaskDetailModal({ taskId, teamMembers, currentUserId, onClose }:
                     <div className="space-y-3">
                       {activities.map((activity) => (
                         <div key={activity.id} className="flex gap-3">
-                          <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-[10px] font-medium shrink-0 mt-0.5">
+                          <div
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-medium shrink-0 mt-0.5"
+                            style={{ backgroundColor: getAvatarColor(activity.user.name) }}
+                          >
                             {activity.user.name[0].toUpperCase()}
                           </div>
                           <div>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium text-gray-900">{activity.user.name}</span>{" "}
+                              <p className="text-sm text-gray-400">
+                              <span className="font-medium text-white">{activity.user.name}</span>{" "}
                               {ACTIVITY_LABELS[activity.action] || activity.action}
                             </p>
                             <p className="text-xs text-gray-400">{format(new Date(activity.createdAt), "MMM d, h:mm a")}</p>

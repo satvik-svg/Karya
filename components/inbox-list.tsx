@@ -33,11 +33,11 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  assigned: "bg-blue-50 text-blue-600",
-  commented: "bg-purple-50 text-purple-600",
-  completed: "bg-green-50 text-green-600",
-  mentioned: "bg-orange-50 text-orange-600",
-  due_soon: "bg-red-50 text-red-600",
+  assigned: "bg-blue-500/15 text-blue-400",
+  commented: "bg-[#6B7A2A]/20 text-[#8B9A35]",
+  completed: "bg-green-500/15 text-green-400",
+  mentioned: "bg-orange-500/15 text-orange-400",
+  due_soon: "bg-red-500/15 text-red-400",
 };
 
 export function InboxList({ notifications }: { notifications: Notification[] }) {
@@ -77,7 +77,7 @@ export function InboxList({ notifications }: { notifications: Notification[] }) 
           <button
             onClick={() => setFilter("all")}
             className={`px-3 py-1.5 text-sm rounded-lg transition ${
-              filter === "all" ? "bg-indigo-50 text-indigo-700 font-medium" : "text-gray-500 hover:bg-gray-100"
+              filter === "all" ? "bg-white/10 text-white font-medium" : "text-gray-400 hover:bg-white/5"
             }`}
           >
             All ({items.length})
@@ -85,7 +85,7 @@ export function InboxList({ notifications }: { notifications: Notification[] }) 
           <button
             onClick={() => setFilter("unread")}
             className={`px-3 py-1.5 text-sm rounded-lg transition ${
-              filter === "unread" ? "bg-indigo-50 text-indigo-700 font-medium" : "text-gray-500 hover:bg-gray-100"
+              filter === "unread" ? "bg-white/10 text-white font-medium" : "text-gray-400 hover:bg-white/5"
             }`}
           >
             Unread ({unreadCount})
@@ -95,7 +95,7 @@ export function InboxList({ notifications }: { notifications: Notification[] }) 
           <button
             onClick={handleMarkAllRead}
             disabled={isPending}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#8B9A35] hover:bg-white/5 rounded-lg transition"
           >
             <CheckCheck className="w-4 h-4" />
             Mark all read
@@ -121,15 +121,15 @@ export function InboxList({ notifications }: { notifications: Notification[] }) 
               <div
                 className={`flex items-start gap-3 p-4 rounded-xl border transition group ${
                   notification.read
-                    ? "bg-white border-gray-100"
-                    : "bg-indigo-50/30 border-indigo-100"
+                    ? "bg-[#1C1C1E] border-white/8"
+                    : "bg-[#6B7A2A]/10 border-[#6B7A2A]/20"
                 }`}
               >
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}>
                   <Icon className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm ${notification.read ? "text-gray-600" : "text-gray-900 font-medium"}`}>
+                  <p className={`text-sm ${notification.read ? "text-gray-400" : "text-white font-medium"}`}>
                     {notification.message}
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
@@ -144,7 +144,7 @@ export function InboxList({ notifications }: { notifications: Notification[] }) 
                         e.stopPropagation();
                         handleMarkRead(notification.id);
                       }}
-                      className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-white transition"
+                      className="p-1.5 text-gray-500 hover:text-[#8B9A35] rounded-lg hover:bg-white/10 transition"
                       title="Mark as read"
                     >
                       <CheckCircle2 className="w-4 h-4" />
@@ -156,7 +156,7 @@ export function InboxList({ notifications }: { notifications: Notification[] }) 
                       e.stopPropagation();
                       handleDelete(notification.id);
                     }}
-                    className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-white transition"
+                      className="p-1.5 text-gray-500 hover:text-red-400 rounded-lg hover:bg-white/10 transition"
                     title="Delete"
                   >
                     <Trash2 className="w-4 h-4" />

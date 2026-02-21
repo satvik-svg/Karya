@@ -50,31 +50,31 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={FolderOpen}
-          iconColor="text-blue-600"
-          iconBg="bg-blue-50"
+          iconColor="text-blue-400"
+          iconBg="bg-blue-500/15"
           label="Total Projects"
           value={data.totalProjects}
         />
         <StatCard
           icon={CheckCircle2}
-          iconColor="text-green-600"
-          iconBg="bg-green-50"
+          iconColor="text-green-400"
+          iconBg="bg-green-500/15"
           label="Tasks Completed"
           value={data.completedTasks}
           subtitle={`of ${data.totalTasks} total`}
         />
         <StatCard
           icon={TrendingUp}
-          iconColor="text-indigo-600"
-          iconBg="bg-indigo-50"
+          iconColor="text-[#8B9A35]"
+          iconBg="bg-[#6B7A2A]/20"
           label="Completion Rate"
           value={`${data.completionRate}%`}
           trend={data.completionRate >= 50 ? "up" : "down"}
         />
         <StatCard
           icon={AlertTriangle}
-          iconColor="text-red-600"
-          iconBg="bg-red-50"
+          iconColor="text-red-400"
+          iconBg="bg-red-500/15"
           label="Overdue Tasks"
           value={data.overdueTasks}
         />
@@ -82,8 +82,8 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Tasks Created (Last 7 Days) */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <div className="bg-[#1C1C1E] rounded-xl border border-white/8 p-5">
+          <h3 className="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Tasks Created (Last 7 Days)
           </h3>
@@ -91,21 +91,21 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
             {dayValues.map((value, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
                 <span className="text-xs text-gray-500 font-medium">{value}</span>
-                <div className="w-full bg-gray-100 rounded-t-md relative" style={{ height: "120px" }}>
+                <div className="w-full bg-white/10 rounded-t-md relative" style={{ height: "120px" }}>
                   <div
-                    className="absolute bottom-0 w-full bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t-md transition-all"
+                    className="absolute bottom-0 w-full bg-gradient-to-t from-[#6B7A2A] to-[#8B9A35] rounded-t-md transition-all"
                     style={{ height: `${(value / maxDayValue) * 100}%`, minHeight: value > 0 ? "4px" : "0" }}
                   />
                 </div>
-                <span className="text-[10px] text-gray-400">{dayLabels[i]}</span>
+                <span className="text-[10px] text-gray-500">{dayLabels[i]}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Priority Distribution */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <div className="bg-[#1C1C1E] rounded-xl border border-white/8 p-5">
+          <h3 className="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
             <Clock className="w-4 h-4" />
             Priority Distribution
           </h3>
@@ -119,10 +119,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
       </div>
 
       {/* Project Completion Rates */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">Project Completion Rates</h3>
+      <div className="bg-[#1C1C1E] rounded-xl border border-white/8 p-5">
+        <h3 className="text-sm font-semibold text-gray-300 mb-4">Project Completion Rates</h3>
         {data.projectStats.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">No projects yet</p>
+          <p className="text-sm text-gray-500 text-center py-8">No projects yet</p>
         ) : (
           <div className="space-y-4">
             {data.projectStats.map((project) => (
@@ -135,12 +135,12 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-700 truncate">{project.name}</span>
-                    <span className="text-sm font-medium text-gray-500">
+                    <span className="text-sm font-medium text-gray-200 truncate">{project.name}</span>
+                    <span className="text-sm font-medium text-gray-400">
                       {project.completedTasks}/{project.totalTasks} ({project.completionRate}%)
                     </span>
                   </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div className="w-full bg-white/10 rounded-full h-2">
                     <div
                       className="h-2 rounded-full transition-all"
                       style={{
@@ -177,24 +177,24 @@ function StatCard({
   trend?: "up" | "down";
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
+    <div className="bg-[#1C1C1E] rounded-xl border border-white/8 p-5">
       <div className="flex items-center gap-3">
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconBg}`}>
           <Icon className={`w-5 h-5 ${iconColor}`} />
         </div>
         <div>
           <div className="flex items-center gap-1.5">
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className="text-2xl font-bold text-white">{value}</p>
             {trend && (
               trend === "up" ? (
-                <ArrowUp className="w-4 h-4 text-green-500" />
+                <ArrowUp className="w-4 h-4 text-green-400" />
               ) : (
-                <ArrowDown className="w-4 h-4 text-red-500" />
+                <ArrowDown className="w-4 h-4 text-red-400" />
               )
             )}
           </div>
-          <p className="text-sm text-gray-500">{label}</p>
-          {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+          <p className="text-sm text-gray-400">{label}</p>
+          {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
         </div>
       </div>
     </div>
@@ -206,10 +206,10 @@ function PriorityBar({ label, count, total, color }: { label: string; count: num
   return (
     <div>
       <div className="flex items-center justify-between text-sm mb-1">
-        <span className="text-gray-600">{label}</span>
+        <span className="text-gray-400">{label}</span>
         <span className="text-gray-500">{count} ({pct}%)</span>
       </div>
-      <div className="w-full bg-gray-100 rounded-full h-2">
+      <div className="w-full bg-white/10 rounded-full h-2">
         <div className={`h-2 rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
     </div>

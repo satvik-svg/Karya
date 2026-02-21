@@ -5,6 +5,7 @@ import { KanbanBoard } from "./kanban-board";
 import { ListView } from "./list-view";
 import { TaskDetailModal } from "./task-detail-modal";
 import { CreateTaskDialog } from "./create-task-dialog";
+import { getAvatarColor } from "@/lib/avatar-color";
 import {
   LayoutGrid,
   List,
@@ -92,92 +93,112 @@ export function ProjectView({ project, teamMembers, currentUserId }: Props) {
   return (
     <div className="h-full flex flex-col">
       {/* Project Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-              style={{ backgroundColor: project.color }}
-            >
-              {project.name[0].toUpperCase()}
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">
-                {project.name}
-              </h1>
-              {project.description && (
-                <p className="text-sm text-gray-500">{project.description}</p>
-              )}
-            </div>
+      <div className="bg-[#1C1C1E] border-b border-white/8 px-4 sm:px-6 py-3">
+        {/* Row 1: title + add task */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-sm"
+            style={{ backgroundColor: project.color }}
+          >
+            {project.name[0].toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base font-semibold text-white truncate leading-tight">
+              {project.name}
+            </h1>
+            {project.description && (
+              <p className="text-xs text-gray-400 truncate">{project.description}</p>
+            )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* View toggle */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
-              <button
-                onClick={() => setView("board")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
-                  view === "board"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+          {/* Members — hidden on mobile */}
+          <div className="hidden sm:flex -space-x-2 shrink-0">
+            {teamMembers.slice(0, 3).map((m) => (
+              <div
+                key={m.id}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium ring-2 ring-[#1C1C1E]"
+                style={{ backgroundColor: getAvatarColor(m.name) }}
+                title={m.name}
               >
-                <LayoutGrid className="w-4 h-4" />
-                Board
-              </button>
-              <button
-                onClick={() => setView("list")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
-                  view === "list"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <List className="w-4 h-4" />
-                List
-              </button>
-            </div>
-
-            {/* Members indicator */}
-            <div className="flex -space-x-2 ml-2">
-              {teamMembers.slice(0, 3).map((m) => (
-                <div
-                  key={m.id}
-                  className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-medium ring-2 ring-white"
-                  title={m.name}
-                >
-                  {m.name[0].toUpperCase()}
-                </div>
-              ))}
-              {teamMembers.length > 3 && (
-                <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600 ring-2 ring-white">
-                  +{teamMembers.length - 3}
-                </div>
-              )}
-            </div>
-
-            {/* Add task */}
-            <button
-              onClick={() => {
-                setDefaultSectionId(project.sections[0]?.id || null);
-                setShowCreateTask(true);
-              }}
-              className="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition"
-            >
-              <Plus className="w-4 h-4" />
-              Add Task
-            </button>
+                {m.name[0].toUpperCase()}
+              </div>
+            ))}
+            {teamMembers.length > 3 && (
+              <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium text-gray-400 ring-2 ring-[#1C1C1E]">
+                +{teamMembers.length - 3}
+              </div>
+            )}
           </div>
+
+          {/* Add task */}
+          <button
+            onClick={() => {
+              setDefaultSectionId(project.sections[0]?.id || null);
+              setShowCreateTask(true);
+            }}
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#6B7A2A] rounded-lg hover:bg-[#8B9A35] transition"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Add Task</span>
+          </button>
         </div>
 
-        {/* Filter bar */}
+        {/* Row 2: view toggle + filter */}
         <div className="flex items-center gap-2 mt-3">
+          {/* View toggle */}
+          <div className="flex items-center bg-white/8 rounded-lg p-0.5">
+            <button
+              onClick={() => setView("board")}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition ${
+                view === "board"
+                  ? "bg-white/15 text-white shadow-sm"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Board</span>
+            </button>
+            <button
+              onClick={() => setView("list")}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition ${
+                view === "list"
+                  ? "bg-white/15 text-white shadow-sm"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>List</span>
+            </button>
+          </div>
+
+          {/* Members — mobile only, inline */}
+          <div className="flex sm:hidden -space-x-2">
+            {teamMembers.slice(0, 2).map((m) => (
+              <div
+                key={m.id}
+                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-medium ring-2 ring-[#1C1C1E]"
+                style={{ backgroundColor: getAvatarColor(m.name) }}
+                title={m.name}
+              >
+                {m.name[0].toUpperCase()}
+              </div>
+            ))}
+            {teamMembers.length > 2 && (
+              <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-medium text-gray-400 ring-2 ring-[#1C1C1E]">
+                +{teamMembers.length - 2}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Filter button */}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg border transition ${
               hasActiveFilters
-                ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-                : "border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                ? "border-[#6B7A2A]/40 bg-[#6B7A2A]/15 text-[#8B9A35]"
+                : "border-white/10 text-gray-400 hover:text-gray-200 hover:bg-white/5"
             }`}
           >
             <Filter className="w-3.5 h-3.5" />
@@ -191,58 +212,59 @@ export function ProjectView({ project, teamMembers, currentUserId }: Props) {
                   setFilterStatus("");
                   setFilterSearch("");
                 }}
-                className="ml-1 hover:text-indigo-900"
+                className="ml-1 hover:text-[#8B9A35]"
               >
                 <X className="w-3 h-3" />
               </button>
             )}
           </button>
-
-          {showFilters && (
-            <>
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  value={filterSearch}
-                  onChange={(e) => setFilterSearch(e.target.value)}
-                  placeholder="Search tasks..."
-                  className="pl-7 pr-2 py-1 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none w-40"
-                />
-              </div>
-              <select
-                value={filterPriority}
-                onChange={(e) => setFilterPriority(e.target.value)}
-                className="px-2 py-1 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none"
-              >
-                <option value="">All priorities</option>
-                <option value="urgent">Urgent</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
-              <select
-                value={filterAssignee}
-                onChange={(e) => setFilterAssignee(e.target.value)}
-                className="px-2 py-1 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none"
-              >
-                <option value="">All assignees</option>
-                <option value="unassigned">Unassigned</option>
-                {teamMembers.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-2 py-1 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none"
-              >
-                <option value="">All statuses</option>
-                <option value="incomplete">Incomplete</option>
-                <option value="completed">Completed</option>
-              </select>
-            </>
-          )}
         </div>
+
+        {/* Filter selects row — shown below toolbar */}
+        {showFilters && (
+          <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-1">
+            <div className="relative shrink-0">
+              <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={filterSearch}
+                onChange={(e) => setFilterSearch(e.target.value)}
+                placeholder="Search tasks..."
+                className="pl-7 pr-2 py-1 text-xs bg-white/5 border border-white/10 text-white placeholder:text-gray-500 rounded-lg focus:ring-1 focus:ring-[#6B7A2A] outline-none w-36"
+              />
+            </div>
+            <select
+              value={filterPriority}
+              onChange={(e) => setFilterPriority(e.target.value)}
+              className="shrink-0 px-2 py-1 text-xs bg-[#1C1C1E] border border-white/10 text-gray-300 rounded-lg focus:ring-1 focus:ring-[#6B7A2A] outline-none"
+            >
+              <option value="">All priorities</option>
+              <option value="urgent">Urgent</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+            <select
+              value={filterAssignee}
+              onChange={(e) => setFilterAssignee(e.target.value)}
+              className="shrink-0 px-2 py-1 text-xs bg-[#1C1C1E] border border-white/10 text-gray-300 rounded-lg focus:ring-1 focus:ring-[#6B7A2A] outline-none"
+            >
+              <option value="">All assignees</option>
+              <option value="unassigned">Unassigned</option>
+              {teamMembers.map((m) => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="shrink-0 px-2 py-1 text-xs bg-[#1C1C1E] border border-white/10 text-gray-300 rounded-lg focus:ring-1 focus:ring-[#6B7A2A] outline-none"
+            >
+              <option value="">All statuses</option>
+              <option value="incomplete">Incomplete</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Content */}

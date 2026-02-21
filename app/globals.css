@@ -28,6 +28,27 @@ body {
   background: transparent;
 }
 
+/* Animations */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-15px) rotate(-6deg); }
+}
+@keyframes float-medium {
+  0%, 100% { transform: translateY(0) rotate(3deg); }
+  50% { transform: translateY(-10px) rotate(3deg); }
+}
+@keyframes float-fast {
+  0%, 100% { transform: translateY(0) rotate(3deg); }
+  50% { transform: translateY(-8px) rotate(3deg); }
+}
+
+.animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
+.animate-float-medium { animation: float-medium 5s ease-in-out infinite; }
+.animate-float-fast { animation: float-fast 4s ease-in-out infinite; }
+
+.font-handwriting { font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif; }
+
+
 ::-webkit-scrollbar-thumb {
   background: #d1d5db;
   border-radius: 3px;

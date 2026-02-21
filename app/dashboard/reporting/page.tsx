@@ -5,12 +5,14 @@ export default async function ReportingPage() {
   const analytics = await getAnalytics();
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="h-full overflow-auto bg-[#141414]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Reporting</h1>
-        <p className="text-gray-500 mt-1">Analytics and insights across your projects</p>
+        <h1 className="text-2xl font-bold text-white">Reporting</h1>
+        <p className="text-gray-400 mt-1">Analytics and insights across your projects</p>
       </div>
       <AnalyticsDashboard data={analytics} />
+      </div>
     </div>
   );
 }

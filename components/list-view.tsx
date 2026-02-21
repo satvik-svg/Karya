@@ -13,6 +13,7 @@ import {
   Paperclip,
 } from "lucide-react";
 import { useState } from "react";
+import { getAvatarColor } from "@/lib/avatar-color";
 import { updateTask } from "@/lib/actions/tasks";
 
 interface Task {
@@ -45,15 +46,15 @@ interface Props {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  urgent: "text-red-500 bg-red-50",
-  high: "text-orange-500 bg-orange-50",
-  medium: "text-yellow-600 bg-yellow-50",
-  low: "text-blue-500 bg-blue-50",
+  urgent: "text-red-400 bg-red-500/15",
+  high: "text-orange-400 bg-orange-500/15",
+  medium: "text-yellow-400 bg-yellow-500/15",
+  low: "text-blue-400 bg-blue-500/15",
 };
 
 const SECTION_COLORS: Record<string, string> = {
   "To Do": "border-l-gray-400",
-  "In Progress": "border-l-blue-500",
+  "In Progress": "border-l-blue-400",
   "Done": "border-l-green-500",
 };
 
@@ -92,17 +93,17 @@ export function ListView({ sections, projectId, teamMembers, onTaskClick }: Prop
               ) : (
                 <ChevronDown className="w-4 h-4 text-gray-400" />
               )}
-              <h3 className="text-sm font-semibold text-gray-700">{section.name}</h3>
-              <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+              <h3 className="text-sm font-semibold text-gray-300">{section.name}</h3>
+              <span className="text-xs text-gray-400 bg-white/8 px-1.5 py-0.5 rounded-full">
                 {section.tasks.length}
               </span>
             </button>
 
             {/* Tasks table */}
             {!isCollapsed && (
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="bg-[#1C1C1E] rounded-xl border border-white/8 overflow-hidden">
                 {/* Header */}
-                <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-white/5 border-b border-white/5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="col-span-5">Task</div>
                   <div className="col-span-2">Assignee</div>
                   <div className="col-span-2">Due Date</div>
@@ -125,8 +126,8 @@ export function ListView({ sections, projectId, teamMembers, onTaskClick }: Prop
                       <div
                         key={task.id}
                         onClick={() => onTaskClick(task.id)}
-                        className={`grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 cursor-pointer transition border-l-2 ${
-                          SECTION_COLORS[section.name] || "border-l-indigo-500"
+                        className={`grid grid-cols-12 gap-4 px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5 cursor-pointer transition border-l-2 ${
+                          SECTION_COLORS[section.name] || "border-l-[#6B7A2A]"
                         }`}
                       >
                         {/* Task name */}
@@ -150,7 +151,7 @@ export function ListView({ sections, projectId, teamMembers, onTaskClick }: Prop
                             className={`text-sm truncate ${
                               task.completed
                                 ? "line-through text-gray-400"
-                                : "text-gray-900"
+                                : "text-white"
                             }`}
                           >
                             {task.title}
@@ -161,15 +162,18 @@ export function ListView({ sections, projectId, teamMembers, onTaskClick }: Prop
                         <div className="col-span-2 flex items-center">
                           {task.assignee ? (
                             <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-medium">
+                              <div
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-medium"
+                                style={{ backgroundColor: getAvatarColor(task.assignee.name) }}
+                              >
                                 {task.assignee.name[0].toUpperCase()}
                               </div>
-                              <span className="text-sm text-gray-600 truncate">
+                              <span className="text-sm text-gray-400 truncate">
                                 {task.assignee.name.split(" ")[0]}
                               </span>
                             </div>
                           ) : (
-                            <span className="text-sm text-gray-300">Unassigned</span>
+                            <span className="text-sm text-gray-500">Unassigned</span>
                           )}
                         </div>
 
@@ -182,7 +186,7 @@ export function ListView({ sections, projectId, teamMembers, onTaskClick }: Prop
                                   ? "text-red-500"
                                   : isDueToday
                                   ? "text-orange-500"
-                                  : "text-gray-500"
+                                  : "text-gray-400"
                               }`}
                             >
                               <Calendar className="w-3.5 h-3.5" />
@@ -193,7 +197,7 @@ export function ListView({ sections, projectId, teamMembers, onTaskClick }: Prop
                                 : format(new Date(task.dueDate!), "MMM d")}
                             </span>
                           ) : (
-                            <span className="text-sm text-gray-300">No date</span>
+                            <span className="text-sm text-gray-500">No date</span>
                           )}
                         </div>
 
@@ -201,7 +205,7 @@ export function ListView({ sections, projectId, teamMembers, onTaskClick }: Prop
                         <div className="col-span-1 flex items-center">
                           <span
                             className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${
-                              PRIORITY_COLORS[task.priority] || "text-gray-500 bg-gray-50"
+                              PRIORITY_COLORS[task.priority] || "text-gray-400 bg-white/8"
                             }`}
                           >
                             {task.priority}

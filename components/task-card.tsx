@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { getAvatarColor } from "@/lib/avatar-color";
 import { format, isPast, isToday } from "date-fns";
 import { updateTask } from "@/lib/actions/tasks";
 import {
@@ -58,7 +59,7 @@ export function TaskCard({ task, onClick }: Props) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-lg border border-gray-200 p-3 cursor-pointer hover:shadow-md hover:border-gray-300 transition group"
+      className="bg-[#1C1C1E] rounded-lg border border-white/8 p-3 cursor-pointer hover:shadow-md hover:border-white/15 transition group"
     >
       {/* Title */}
       <div className="flex items-start gap-2">
@@ -74,7 +75,7 @@ export function TaskCard({ task, onClick }: Props) {
         </button>
         <span
           className={`text-sm font-medium ${
-            optimisticCompleted ? "line-through text-gray-400" : "text-gray-900"
+            optimisticCompleted ? "line-through text-gray-400" : "text-white"
           }`}
         >
           {task.title}
@@ -136,7 +137,8 @@ export function TaskCard({ task, onClick }: Props) {
         <div className="flex-1" />
         {task.assignee && (
           <div
-            className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-medium"
+            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-medium"
+            style={{ backgroundColor: getAvatarColor(task.assignee.name) }}
             title={task.assignee.name}
           >
             {task.assignee.name[0].toUpperCase()}
