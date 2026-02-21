@@ -14,6 +14,8 @@ import {
   Target,
   Briefcase,
   BarChart3,
+  Lightbulb,
+  StickyNote,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -105,6 +107,8 @@ export default function Sidebar({ user, projects, teams, unreadCount = 0, onClos
             { href: "/dashboard/reporting", label: "Reporting", icon: BarChart3 },
             { href: "/dashboard/portfolios", label: "Portfolios", icon: Briefcase },
             { href: "/dashboard/goals", label: "Goals", icon: Target },
+            { href: "/dashboard/ideas", label: "Ideas", icon: Lightbulb },
+            { href: "/dashboard/notes", label: "My Notes", icon: StickyNote },
           ].map((item) => {
             const isActive = pathname === item.href;
             return (
