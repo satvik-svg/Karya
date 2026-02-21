@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
     // Type safety is still enforced in the editor via tsserver.
     ignoreBuildErrors: true,
   },
+  images: {
+    // Skip server-side optimization (sharp/squoosh) for static assets.
+    // logo.png is already correctly sized; serve it directly from /public.
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;
