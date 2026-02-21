@@ -16,6 +16,7 @@ import {
   Briefcase,
   BarChart3,
   Lightbulb,
+  StickyNote,
 } from "lucide-react";
 import { useState } from "react";
 import { SearchDialog } from "./search-dialog";
@@ -52,6 +53,7 @@ export default function Sidebar({ user, projects, teams, unreadCount = 0 }: Side
     { href: "/dashboard/portfolios", label: "Portfolios", icon: Briefcase },
     { href: "/dashboard/reporting", label: "Reporting", icon: BarChart3 },
     { href: "/dashboard/ideas", label: "Ideas", icon: Lightbulb },
+    { href: "/dashboard/notes", label: "My Notes", icon: StickyNote },
   ];
 
   return (

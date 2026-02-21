@@ -34,6 +34,7 @@ model User {
   ideas          Idea[]          @relation("IdeaCreator")
   ideaComments   IdeaComment[]   @relation("IdeaCommentAuthor")
   ideaVotes      IdeaVote[]      @relation("IdeaVoter")
+  notes          Note[]          @relation("NoteOwner")
 }
 
 model Team {
@@ -321,4 +322,17 @@ model IdeaVote {
   user User @relation("IdeaVoter", fields: [userId], references: [id])
 
   @@unique([ideaId, userId])
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @default("")
+  color     String   @default("default")
+  pinned    Boolean  @default(false)
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation("NoteOwner", fields: [userId], references: [id], onDelete: Cascade)
 }
