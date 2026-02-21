@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Image from "next/image";
 import { Menu } from "lucide-react";
 import Sidebar from "./sidebar";
 
@@ -88,13 +89,13 @@ export function DashboardShell({
           >
             <Menu className="w-5 h-5" />
           </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/logo.png"
             alt="Logo"
             width={28}
             height={28}
             className="rounded-lg object-contain"
+            priority
           />
         </div>
         <div className="flex-1 overflow-auto">

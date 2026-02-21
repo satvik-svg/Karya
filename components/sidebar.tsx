@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
@@ -51,8 +52,7 @@ export default function Sidebar({ user, projects, teams, unreadCount = 0, onClos
       <div className="px-5 py-4 border-b border-[#262626]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Logo" width={36} height={36} className="rounded-lg object-contain" />
+            <Image src="/logo.png" alt="Logo" width={36} height={36} className="rounded-lg object-contain" priority />
           </div>
           {onClose && (
             <button

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { Check, Clock, Mail, Slack, Calendar } from "lucide-react";
 
 export function FloatingCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -63,13 +64,13 @@ export function LandingNav() {
         <nav className="flex items-center justify-between px-6 md:px-10 py-4 max-w-7xl mx-auto relative z-10">
             {/* Logo */}
             <div className="flex items-center gap-2.5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                     src="/logo.png"
                     alt="Logo"
                     width={60}
                     height={60}
                     className="rounded-xl object-contain"
+                    priority
                 />
             </div>
 

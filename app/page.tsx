@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { Clock, Mail, Slack, Calendar, ArrowRight } from "lucide-react";
 import {
   LandingNav,
@@ -25,13 +26,13 @@ export default async function Home() {
 
           {/* Center logo icon */}
           <div className="mb-8 bg-[#141414] border border-[#262626] rounded-2xl shadow-lg p-3 inline-flex items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/logo.png"
               alt="Logo"
               width={60}
               height={60}
               className="object-contain rounded-xl"
+              priority
             />
           </div>
 
@@ -129,8 +130,7 @@ export default async function Home() {
       <footer className="relative z-10 border-t border-[#262626] py-10 px-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Logo" width={36} height={36} className="rounded-lg object-contain" />
+            <Image src="/logo.png" alt="Logo" width={36} height={36} className="rounded-lg object-contain" />
           </div>
           <p className="text-sm text-[#737373]">
             © 2026 All rights reserved. Built for modern teams.
