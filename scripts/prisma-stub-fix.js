@@ -29,14 +29,14 @@ const filesToCopy = [
 
 // In Prisma 6.19.x, library.js was renamed to client.js but generated
 // client code (node_modules/.prisma/client/index.js) still requires library.js.
+let anyFixed = false;
+
 const libraryStub = path.join(runtimeDir, "library.js");
 if (!fs.existsSync(libraryStub) && fs.existsSync(path.join(runtimeDir, "client.js"))) {
   fs.writeFileSync(libraryStub, "module.exports = require('./client.js');\n");
   console.log("[prisma-stub-fix] Created library.js -> client.js stub");
   anyFixed = true;
 }
-
-let anyFixed = false;
 
 for (const [src, dest] of filesToCopy) {
   const srcPath  = path.join(runtimeDir, src);
