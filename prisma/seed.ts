@@ -13,31 +13,31 @@ async function main() {
   const hashedPassword = await bcrypt.hash("password123", 12);
 
   const user = await prisma.user.upsert({
-    where: { email: "demo@anant.com" },
+    where: { email: "demo@karya.com" },
     update: {},
     create: {
       name: "Demo User",
-      email: "demo@anant.com",
+      email: "demo@karya.com",
       hashedPassword,
     },
   });
 
   const user2 = await prisma.user.upsert({
-    where: { email: "alice@anant.com" },
+    where: { email: "alice@karya.com" },
     update: {},
     create: {
       name: "Alice Johnson",
-      email: "alice@anant.com",
+      email: "alice@karya.com",
       hashedPassword,
     },
   });
 
   const user3 = await prisma.user.upsert({
-    where: { email: "bob@anant.com" },
+    where: { email: "bob@karya.com" },
     update: {},
     create: {
       name: "Bob Smith",
-      email: "bob@anant.com",
+      email: "bob@karya.com",
       hashedPassword,
     },
   });
@@ -188,10 +188,10 @@ async function main() {
   console.log("🎉 Seeding complete!");
   console.log("");
   console.log("📧 Demo login credentials:");
-  console.log("   Email: demo@anant.com");
+  console.log("   Email: demo@karya.com");
   console.log("   Password: password123");
   console.log("");
-  console.log("   Other accounts: alice@anant.com, bob@anant.com (same password)");
+  console.log("   Other accounts: alice@karya.com, bob@karya.com (same password)");
 }
 
 main()

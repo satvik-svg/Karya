@@ -26,9 +26,9 @@ export async function sendInviteEmail({
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   const { data, error } = await resend.emails.send({
-    from: "Anant <noreply@arogyaherb.store>",
+    from: "Karya <noreply@arogyaherb.store>",
     to,
-    subject: `${inviterName} invited you to join "${projectName}" on Anant`,
+    subject: `${inviterName} invited you to join "${projectName}" on Karya`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -53,10 +53,10 @@ export async function sendInviteEmail({
               <table cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#a855f7);border-radius:10px;text-align:center;vertical-align:middle;color:#ffffff;font-weight:700;font-size:18px;">
-                    A
+                    K
                   </td>
                   <td style="padding-left:12px;font-size:20px;font-weight:700;color:#111827;">
-                    Anant
+                    Karya
                   </td>
                 </tr>
               </table>
@@ -88,7 +88,7 @@ export async function sendInviteEmail({
                         </td>
                         <td style="padding-left:14px;">
                           <div style="font-size:16px;font-weight:600;color:#111827;">${projectName}</div>
-                          <div style="font-size:13px;color:#9ca3af;margin-top:2px;">Project on Anant</div>
+                          <div style="font-size:13px;color:#9ca3af;margin-top:2px;">Project on Karya</div>
                         </td>
                       </tr>
                     </table>
