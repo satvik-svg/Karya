@@ -16,7 +16,10 @@ import {
   UserPlus,
   FileText,
   BarChart3,
+  Trash2,
+  Loader2,
 } from "lucide-react";
+import { deleteProject } from "@/lib/actions/projects";
 import { InviteDialog } from "./invite-dialog";
 import { ProjectOverview } from "./project-overview";
 import { ProjectProgress } from "./project-progress";
@@ -103,6 +106,16 @@ export function ProjectView({ project, teamMembers, currentUserId, otherProjects
   const [filterTrackingStatus, setFilterTrackingStatus] = useState<string>("");
   const [filterSearch, setFilterSearch] = useState("");
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const isCreator = project.creatorId === currentUserId;
+
+  async function handleDeleteProject() {
+    setDeleting(true);
+    await deleteProject(project.id);
+    router.push("/dashboard");
+  }
 
   const hasActiveFilters = filterPriority || filterAssignee || filterStatus || filterTrackingStatus || filterSearch;
 
@@ -167,6 +180,35 @@ export function ProjectView({ project, teamMembers, currentUserId, otherProjects
                 </div>
               )}
             </div>
+
+            {/* Delete project — only for creator */}
+            {isCreator && (
+              confirmDelete ? (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={handleDeleteProject}
+                    disabled={deleting}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                  >
+                    {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-[#a3a3a3] bg-[#2a2a2a] rounded-lg hover:bg-[#3a3a3a] transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-red-400 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition"
+                  title="Delete project"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )
+            )}
 
             {/* Invite button — icon-only on mobile */}
             <button

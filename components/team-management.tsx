@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { inviteToTeam, removeFromTeam, createTeam } from "@/lib/actions/teams";
+import { inviteToTeam, removeFromTeam, createTeam, deleteTeam } from "@/lib/actions/teams";
 import {
   Users,
   UserPlus,
@@ -51,6 +51,8 @@ export function TeamManagement({ teams, currentUserId }: Props) {
   const [isPending, startTransition] = useTransition();
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [newTeamName, setNewTeamName] = useState("");
+  const [confirmDeleteTeamId, setConfirmDeleteTeamId] = useState<string | null>(null);
+  const [deletingTeamId, setDeletingTeamId] = useState<string | null>(null);
 
   async function handleCreateTeam() {
     if (!newTeamName.trim()) return;
@@ -88,6 +90,18 @@ export function TeamManagement({ teams, currentUserId }: Props) {
     startTransition(async () => {
       await removeFromTeam(teamId, userId);
     });
+  }
+
+  async function handleDeleteTeam(teamId: string) {
+    setDeletingTeamId(teamId);
+    const result = await deleteTeam(teamId);
+    setDeletingTeamId(null);
+    setConfirmDeleteTeamId(null);
+    if (result?.error) {
+      setError(result.error);
+    } else {
+      setSuccess("Team deleted successfully");
+    }
   }
 
   return (
@@ -205,6 +219,34 @@ export function TeamManagement({ teams, currentUserId }: Props) {
                 </p>
               </div>
             </div>
+            {/* Delete team — only for owner */}
+            {team.members.some((m) => m.user.id === currentUserId && m.role === "owner") && (
+              confirmDeleteTeamId === team.id ? (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleDeleteTeam(team.id)}
+                    disabled={deletingTeamId === team.id}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                  >
+                    {deletingTeamId === team.id ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteTeamId(null)}
+                    className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-[#a3a3a3] bg-[#2a2a2a] rounded-lg hover:bg-[#3a3a3a] transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmDeleteTeamId(team.id)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-red-400 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition"
+                  title="Delete team"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )
+            )}
           </div>
 
           <div className="divide-y divide-[#262626]">

@@ -97,3 +97,34 @@ export async function removeFromTeam(teamId: string, userId: string) {
   after(() => invalidateUserCaches(teamsListCacheKey(userId), projectsListCacheKey(userId)));
   revalidatePath("/dashboard");
 }
+
+export async function deleteTeam(teamId: string) {
+  const userId = await getCurrentUserId();
+
+  // Only team owner can delete
+  const membership = await prisma.teamMember.findUnique({
+    where: { userId_teamId: { userId, teamId } },
+  });
+  if (!membership || membership.role !== "owner") {
+    return { error: "Only the team owner can delete the team" };
+  }
+
+  // Get all member IDs so we can bust their caches
+  const members = await prisma.teamMember.findMany({
+    where: { teamId },
+    select: { userId: true },
+  });
+
+  // Cascade will delete projects, tasks, etc.
+  await prisma.team.delete({ where: { id: teamId } });
+
+  // Invalidate caches for all members
+  const cacheKeys = members.flatMap((m) => [
+    teamsListCacheKey(m.userId),
+    projectsListCacheKey(m.userId),
+  ]);
+  await invalidateUserCaches(...cacheKeys);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/team");
+  return { success: true };
+}
