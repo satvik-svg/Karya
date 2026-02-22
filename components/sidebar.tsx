@@ -12,8 +12,6 @@ import {
   ChevronDown,
   ChevronRight,
   Inbox,
-  Target,
-  Briefcase,
   BarChart3,
   Lightbulb,
   StickyNote,
@@ -105,8 +103,6 @@ export default function Sidebar({ user, projects, teams, unreadCount = 0, onClos
           <p className="px-3 py-1 text-[10px] font-semibold text-[#525252] uppercase tracking-widest">Insights</p>
           {[
             { href: "/dashboard/reporting", label: "Reporting", icon: BarChart3 },
-            { href: "/dashboard/portfolios", label: "Portfolios", icon: Briefcase },
-            { href: "/dashboard/goals", label: "Goals", icon: Target },
             { href: "/dashboard/ideas", label: "Ideas", icon: Lightbulb },
             { href: "/dashboard/notes", label: "My Notes", icon: StickyNote },
           ].map((item) => {
