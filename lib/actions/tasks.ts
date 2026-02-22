@@ -520,7 +520,6 @@ export async function getMyTasks(): Promise<MyTasksResult> {
   const raw = await prisma.task.findMany({
     where: {
       OR: [
-        { creatorId: userId },
         { assigneeId: userId },
         { assignees: { some: { userId } } },
       ],
