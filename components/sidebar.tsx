@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
@@ -16,9 +16,13 @@ import {
   Lightbulb,
   StickyNote,
   X,
+  Plus,
+  Loader2,
 } from "lucide-react";
 import { useState } from "react";
 import { SearchDialog } from "./search-dialog";
+import { CreateProjectDialog } from "./create-project-dialog";
+import { createTeam } from "@/lib/actions/teams";
 
 interface SidebarProps {
   user: {
@@ -42,7 +46,23 @@ interface SidebarProps {
 
 export default function Sidebar({ user, projects, teams, unreadCount = 0, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [projectsOpen, setProjectsOpen] = useState(true);
+  const [showCreateTeam, setShowCreateTeam] = useState(false);
+  const [newTeamName, setNewTeamName] = useState("");
+  const [creatingTeam, setCreatingTeam] = useState(false);
+
+  async function handleCreateTeam() {
+    if (!newTeamName.trim()) return;
+    setCreatingTeam(true);
+    const result = await createTeam(newTeamName.trim());
+    setCreatingTeam(false);
+    if (result?.success) {
+      setNewTeamName("");
+      setShowCreateTeam(false);
+      router.refresh();
+    }
+  }
 
   return (
     <aside className="w-64 bg-[#141414] border-r border-[#262626] flex flex-col h-full shrink-0">
@@ -126,17 +146,30 @@ export default function Sidebar({ user, projects, teams, unreadCount = 0, onClos
 
         {/* Projects section */}
         <div className="pt-3">
-          <button
-            onClick={() => setProjectsOpen(!projectsOpen)}
-            className="flex items-center justify-between w-full px-3 py-1 text-[10px] font-semibold text-[#525252] uppercase tracking-widest hover:text-[#a3a3a3] transition"
-          >
-            <span>Projects</span>
-            {projectsOpen ? (
-              <ChevronDown className="w-3.5 h-3.5" />
-            ) : (
-              <ChevronRight className="w-3.5 h-3.5" />
-            )}
-          </button>
+          <div className="flex items-center justify-between px-3 py-1">
+            <button
+              onClick={() => setProjectsOpen(!projectsOpen)}
+              className="flex items-center gap-1 text-[10px] font-semibold text-[#525252] uppercase tracking-widest hover:text-[#a3a3a3] transition"
+            >
+              <span>Projects</span>
+              {projectsOpen ? (
+                <ChevronDown className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronRight className="w-3.5 h-3.5" />
+              )}
+            </button>
+            <CreateProjectDialog
+              teams={teams.map((t) => ({ id: t.id, name: t.name }))}
+              trigger={
+                <button
+                  className="p-0.5 rounded text-[#525252] hover:text-[#a3a3a3] transition"
+                  title="New project"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              }
+            />
+          </div>
 
           {projectsOpen && (
             <div className="mt-1 space-y-0.5">
@@ -165,10 +198,51 @@ export default function Sidebar({ user, projects, teams, unreadCount = 0, onClos
         </div>
 
         {/* Teams section */}
-        {teams.length > 0 && (
-          <div className="pt-3">
-            <p className="px-3 py-1 text-[10px] font-semibold text-[#525252] uppercase tracking-widest">Teams</p>
-            {teams.map((team) => (
+        <div className="pt-3">
+          <div className="flex items-center justify-between px-3 py-1">
+            <p className="text-[10px] font-semibold text-[#525252] uppercase tracking-widest">Teams</p>
+            <button
+              onClick={() => setShowCreateTeam(!showCreateTeam)}
+              className="p-0.5 rounded text-[#525252] hover:text-[#a3a3a3] transition"
+              title="New team"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {showCreateTeam && (
+            <div className="px-3 mt-1 mb-1">
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={newTeamName}
+                  onChange={(e) => setNewTeamName(e.target.value)}
+                  placeholder="Team name"
+                  className="flex-1 min-w-0 px-2 py-1 text-xs bg-[#1a1a1a] border border-[#3a3a3a] text-[#f5f5f5] placeholder-[#525252] rounded-md focus:ring-1 focus:ring-[#6B7A45] outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCreateTeam();
+                    if (e.key === "Escape") { setShowCreateTeam(false); setNewTeamName(""); }
+                  }}
+                  autoFocus
+                />
+                <button
+                  onClick={handleCreateTeam}
+                  disabled={!newTeamName.trim() || creatingTeam}
+                  className="p-1 rounded-md text-[#6B7A45] hover:bg-[#1f2414] transition disabled:opacity-50"
+                >
+                  {creatingTeam ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                </button>
+                <button
+                  onClick={() => { setShowCreateTeam(false); setNewTeamName(""); }}
+                  className="p-1 rounded-md text-[#525252] hover:text-[#a3a3a3] transition"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {teams.map((team) => (
               <Link
                 key={team.id}
                 href="/dashboard/team"
@@ -183,8 +257,7 @@ export default function Sidebar({ user, projects, teams, unreadCount = 0, onClos
                 <ChevronRight className="w-3.5 h-3.5 ml-auto opacity-40" />
               </Link>
             ))}
-          </div>
-        )}
+        </div>
       </nav>
 
       {/* User */}

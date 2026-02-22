@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { createProject } from "@/lib/actions/projects";
 import { Plus, X, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -20,7 +21,10 @@ export function CreateProjectDialog({ teams, trigger }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  useEffect(() => { setMounted(true); }, []);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
@@ -34,23 +38,8 @@ export function CreateProjectDialog({ teams, trigger }: Props) {
     }
   }
 
-  if (!open) {
-    if (trigger) {
-      return <div onClick={() => setOpen(true)}>{trigger}</div>;
-    }
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#6B7A45] bg-[#1f2414] border border-[#6B7A45]/30 rounded-lg hover:bg-[#2a3019] transition"
-      >
-        <Plus className="w-4 h-4" />
-        New Project
-      </button>
-    );
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+  const modal = open && mounted ? createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-[#141414] border border-[#262626] rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-[#f5f5f5]">New Project</h2>
@@ -142,6 +131,29 @@ export function CreateProjectDialog({ teams, trigger }: Props) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
+  ) : null;
+
+  if (trigger) {
+    return (
+      <>
+        <div onClick={() => setOpen(true)}>{trigger}</div>
+        {modal}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#6B7A45] bg-[#1f2414] border border-[#6B7A45]/30 rounded-lg hover:bg-[#2a3019] transition"
+      >
+        <Plus className="w-4 h-4" />
+        New Project
+      </button>
+      {modal}
+    </>
   );
 }
