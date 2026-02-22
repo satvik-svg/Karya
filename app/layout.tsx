@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Anant - Work Management Platform",
+  title: "Karya - Work Management Platform",
   description: "Manage projects, track tasks, and collaborate with your team",
 };
 

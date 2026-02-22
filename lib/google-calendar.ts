@@ -90,7 +90,7 @@ export async function createCalendarEvent(
         description: [
           task.description || "",
           "",
-          `View in Anant: ${appUrl}/dashboard/projects/${task.projectId}`,
+          `View in Karya: ${appUrl}/dashboard/projects/${task.projectId}`,
         ].join("\n"),
         start: {
           date: startDateStr,
@@ -150,7 +150,7 @@ export async function updateCalendarEvent(
         description: [
           task.description || "",
           "",
-          `View in Anant: ${appUrl}/dashboard/projects/${task.projectId}`,
+          `View in Karya: ${appUrl}/dashboard/projects/${task.projectId}`,
         ].join("\n"),
         start: { date: startDateStr },
         end: { date: endDateStr },
