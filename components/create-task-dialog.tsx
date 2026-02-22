@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { createTask } from "@/lib/actions/tasks";
 import { addTaskToProject } from "@/lib/actions/projects";
 import { X, Loader2, ChevronDown, Check, Users, FolderOpen } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface OtherProject {
   id: string;
@@ -31,6 +32,7 @@ export function CreateTaskDialog({
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
   const [assigneeSearch, setAssigneeSearch] = useState("");
@@ -88,6 +90,7 @@ export function CreateTaskDialog({
     }
     setLoading(false);
     onClose();
+    router.refresh();
   }
 
   return (

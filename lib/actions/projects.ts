@@ -38,8 +38,8 @@ export async function createProject(formData: FormData) {
     },
   });
 
-  // Bust the sidebar projects list for this user
-  after(() => invalidateUserCaches(projectsListCacheKey(userId)));
+  // Bust the sidebar projects list BEFORE revalidating so the layout reads fresh data
+  await invalidateUserCaches(projectsListCacheKey(userId));
   revalidatePath("/dashboard");
   return { success: true, projectId: project.id };
 }
@@ -54,15 +54,15 @@ export async function updateProject(projectId: string, formData: FormData) {
     data: { name, description, color },
   });
 
+  await invalidateProjectCache(projectId);
   revalidatePath(`/dashboard/projects/${projectId}`, "page");
   revalidatePath("/dashboard");
-  after(() => invalidateProjectCache(projectId));
 }
 
 export async function deleteProject(projectId: string) {
   const userId = await getCurrentUserId();
   await prisma.project.delete({ where: { id: projectId } });
-  after(() => invalidateUserCaches(projectsListCacheKey(userId)));
+  await invalidateUserCaches(projectsListCacheKey(userId));
   revalidatePath("/dashboard");
 }
 
@@ -225,14 +225,14 @@ export async function createSection(projectId: string, name: string) {
     },
   });
 
+  await invalidateProjectCache(projectId);
   revalidatePath(`/dashboard/projects/${projectId}`, "page");
-  after(() => invalidateProjectCache(projectId));
 }
 
 export async function deleteSection(sectionId: string, projectId: string) {
   await prisma.section.delete({ where: { id: sectionId } });
+  await invalidateProjectCache(projectId);
   revalidatePath(`/dashboard/projects/${projectId}`, "page");
-  after(() => invalidateProjectCache(projectId));
 }
 
 // ---- Multi-project task actions ----
@@ -276,10 +276,10 @@ export async function addTaskToProject(taskId: string, targetProjectId: string, 
     });
   });
 
+  await invalidateProjectCache(targetProjectId);
+  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${targetProjectId}`, "page");
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
-  after(() => invalidateProjectCache(targetProjectId));
-  after(() => invalidateProjectCache(task.projectId));
   return { success: true };
 }
 
@@ -310,10 +310,10 @@ export async function removeTaskFromProject(taskId: string, projectId: string) {
     });
   });
 
+  await invalidateProjectCache(projectId);
+  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${projectId}`, "page");
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
-  after(() => invalidateProjectCache(projectId));
-  after(() => invalidateProjectCache(task.projectId));
   return { success: true };
 }
 
