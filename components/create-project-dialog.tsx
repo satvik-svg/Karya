@@ -30,6 +30,7 @@ export function CreateProjectDialog({ teams, trigger }: Props) {
     if (result?.projectId) {
       setOpen(false);
       router.push(`/dashboard/projects/${result.projectId}`);
+      router.refresh();
     }
   }
 

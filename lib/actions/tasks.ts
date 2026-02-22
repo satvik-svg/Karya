@@ -91,8 +91,8 @@ export async function createTask(formData: FormData) {
     }
   });
 
+  await invalidateProjectCache(projectId);
   revalidatePath(`/dashboard/projects/${projectId}`, "page");
-  after(() => invalidateProjectCache(projectId));
   return { success: true, taskId: task.id };
 }export async function updateTask(taskId: string, data: {
   title?: string;
@@ -182,9 +182,9 @@ export async function createTask(formData: FormData) {
     if (logAndNotify.length > 0) await Promise.all(logAndNotify);
   });
 
+  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
   revalidatePath("/dashboard/my-tasks", "page");
-  after(() => invalidateProjectCache(task.projectId));
 
   // Google Calendar: update event if due date, start date, or title changed
   after(async () => {
@@ -218,9 +218,9 @@ export async function deleteTask(taskId: string) {
   }
 
   await prisma.task.delete({ where: { id: taskId } });
+  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
   revalidatePath("/dashboard/my-tasks", "page");
-  after(() => invalidateProjectCache(task.projectId));
   return { success: true };
 }
 
@@ -251,8 +251,8 @@ export async function moveTask(taskId: string, newSectionId: string, newOrder: n
     );
   }
 
+  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
-  after(() => invalidateProjectCache(task.projectId));
 }
 
 export async function getTask(taskId: string) {
@@ -377,9 +377,9 @@ export async function addTaskAssignee(taskId: string, userId: string) {
     await Promise.all(jobs);
   });
 
+  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
   revalidatePath("/dashboard/my-tasks", "page");
-  after(() => invalidateProjectCache(task.projectId));
   return { success: true };
 }
 
@@ -411,9 +411,9 @@ export async function removeTaskAssignee(taskId: string, userId: string) {
     })
   );
 
+  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
   revalidatePath("/dashboard/my-tasks", "page");
-  after(() => invalidateProjectCache(task.projectId));
   return { success: true };
 }
 
@@ -468,9 +468,9 @@ export async function updateTaskAssignees(taskId: string, userIds: string[]) {
     ]);
   });
 
+  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
   revalidatePath("/dashboard/my-tasks", "page");
-  after(() => invalidateProjectCache(task.projectId));
 
   // Google Calendar: sync for newly added assignees, remove for removed
   after(async () => {
