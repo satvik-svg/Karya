@@ -9,7 +9,6 @@ import {
   AlertTriangle,
   ListTodo,
   Pencil,
-  FolderOpen,
   Calendar,
   User as UserIcon,
   Palette,
@@ -66,11 +65,6 @@ interface ActivityItem {
   task: { id: string; title: string };
 }
 
-interface PortfolioConnection {
-  id: string;
-  portfolio: { id: string; name: string; color: string };
-}
-
 interface Props {
   project: Project;
   currentUserId: string;
@@ -78,7 +72,6 @@ interface Props {
 
 export function ProjectOverview({ project, currentUserId }: Props) {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [portfolios, setPortfolios] = useState<PortfolioConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingDescription, setEditingDescription] = useState(false);
   const [description, setDescription] = useState(project.description || "");
@@ -89,7 +82,6 @@ export function ProjectOverview({ project, currentUserId }: Props) {
   useEffect(() => {
     getProjectOverview(project.id).then((data) => {
       setActivities(data.activities);
-      setPortfolios(data.portfolioConnections);
       setLoading(false);
     });
   }, [project.id]);
@@ -286,35 +278,6 @@ export function ProjectOverview({ project, currentUserId }: Props) {
             </div>
           </div>
 
-          {/* Connected Portfolios */}
-          <div className="bg-[#1a1a1a] border border-[#262626] rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider mb-4">
-              Connected Portfolios
-            </h2>
-            {loading ? (
-              <p className="text-xs text-[#525252]">Loading...</p>
-            ) : portfolios.length === 0 ? (
-              <p className="text-xs text-[#525252] italic">
-                Not linked to any portfolio yet
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {portfolios.map((pc) => (
-                  <div
-                    key={pc.id}
-                    className="flex items-center gap-3 px-3 py-2 bg-[#141414] rounded-lg border border-[#262626]"
-                  >
-                    <div
-                      className="w-3 h-3 rounded-sm flex-shrink-0"
-                      style={{ backgroundColor: pc.portfolio.color }}
-                    />
-                    <FolderOpen className="w-3.5 h-3.5 text-[#737373]" />
-                    <span className="text-sm text-[#d4d4d4]">{pc.portfolio.name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Right column — 2/5 */}

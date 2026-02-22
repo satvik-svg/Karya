@@ -30,7 +30,6 @@ model User {
   subtasks       Subtask[]      @relation("SubtaskAssignee")
   activities     ActivityLog[]
   notifications  Notification[]
-  goals          Goal[]         @relation("GoalOwner")
   sentInvites    ProjectInvite[] @relation("InviteSender")
   ideas          Idea[]          @relation("IdeaCreator")
   ideaComments   IdeaComment[]   @relation("IdeaCommentAuthor")
@@ -46,7 +45,6 @@ model Team {
 
   members    TeamMember[]
   projects   Project[]
-  portfolios Portfolio[]
   invites    ProjectInvite[]
   ideas      Idea[]
 }
@@ -79,7 +77,6 @@ model Project {
   creator     User        @relation("ProjectCreator", fields: [creatorId], references: [id])
   sections    Section[]
   tasks       Task[]
-  portfolios  PortfolioProject[]
   invites     ProjectInvite[]
   linkedTasks TaskProject[]
 }
@@ -227,46 +224,6 @@ model TaskAssignee {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, userId])
-}
-
-model Goal {
-  id          String    @id @default(uuid())
-  title       String
-  description String?
-  status      String    @default("on_track") // "on_track", "at_risk", "off_track", "completed"
-  progress    Int       @default(0) // 0-100
-  dueDate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  ownerId String
-
-  owner User @relation("GoalOwner", fields: [ownerId], references: [id])
-}
-
-model Portfolio {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  color       String   @default("#6366f1")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  teamId String
-
-  team     Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  projects PortfolioProject[]
-}
-
-model PortfolioProject {
-  id          String @id @default(uuid())
-  portfolioId String
-  projectId   String
-
-  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@unique([portfolioId, projectId])
 }
 
 model ProjectInvite {

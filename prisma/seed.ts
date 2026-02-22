@@ -182,45 +182,7 @@ async function main() {
   const tag4 = await prisma.tag.create({ data: { name: "Urgent", color: "#f59e0b" } });
   console.log("✅ Tags created");
 
-  // Create goals
-  await prisma.goal.create({
-    data: {
-      title: "Launch Website Redesign",
-      description: "Complete and launch the new marketing website by end of Q1",
-      status: "on_track",
-      progress: 45,
-      dueDate: new Date("2026-03-31"),
-      ownerId: user.id,
-    },
-  });
-  await prisma.goal.create({
-    data: {
-      title: "Ship Mobile App v2",
-      description: "Release version 2 of the mobile app with push notifications and dark mode",
-      status: "at_risk",
-      progress: 20,
-      dueDate: new Date("2026-06-30"),
-      ownerId: user2.id,
-    },
-  });
-  console.log("✅ Goals created");
 
-  // Create a portfolio
-  await prisma.portfolio.create({
-    data: {
-      name: "Q1 Initiatives",
-      description: "All projects planned for Q1 2026",
-      color: "#6366f1",
-      teamId: team.id,
-      projects: {
-        create: [
-          { projectId: project1.id },
-          { projectId: project2.id },
-        ],
-      },
-    },
-  });
-  console.log("✅ Portfolios created");
 
   console.log("");
   console.log("🎉 Seeding complete!");
