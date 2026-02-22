@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useTransition } from "react";
 import { createTask } from "@/lib/actions/tasks";
 import { addTaskToProject } from "@/lib/actions/projects";
-import { X, Loader2, ChevronDown, Check, Users, FolderOpen } from "lucide-react";
+import { X, ChevronDown, Check, Users, FolderOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { LoaderOverlay } from "@/components/ui/loader";
 
 interface OtherProject {
   id: string;
@@ -33,6 +34,16 @@ export function CreateTaskDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [readyToClose, setReadyToClose] = useState(false);
+
+  // Close dialog only after the router.refresh() transition has fully painted
+  useEffect(() => {
+    if (readyToClose && !isPending) {
+      setLoading(false);
+      onClose();
+    }
+  }, [readyToClose, isPending, onClose]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
   const [assigneeSearch, setAssigneeSearch] = useState("");
@@ -65,9 +76,11 @@ export function CreateTaskDialog({
       m.email.toLowerCase().includes(assigneeSearch.toLowerCase())
   );
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setLoading(true);
     setError("");
+    const formData = new FormData(e.currentTarget);
     formData.set("projectId", projectId);
     // Remove default assigneeId and add all selected
     formData.delete("assigneeId");
@@ -88,12 +101,17 @@ export function CreateTaskDialog({
         )
       );
     }
-    setLoading(false);
-    onClose();
-    router.refresh();
+    // Trigger a refresh transition; useEffect above will close the dialog
+    // once the new task is actually painted on screen.
+    setReadyToClose(true);
+    startTransition(() => {
+      router.refresh();
+    });
   }
 
   return (
+    <>
+    {loading && <LoaderOverlay message="Creating task…" />}
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="bg-[#1e1e1e] border border-[#2e2e2e] rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6">
         <div className="flex items-center justify-between mb-6">
@@ -112,7 +130,7 @@ export function CreateTaskDialog({
           </div>
         )}
 
-        <form action={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[#a3a3a3] mb-1">
               Title *
@@ -415,13 +433,14 @@ export function CreateTaskDialog({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2 text-sm font-medium text-white bg-[#6B7A45] rounded-xl hover:bg-[#5a6838] transition disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-2 text-sm font-medium text-white bg-[#6B7A45] rounded-xl hover:bg-[#5a6838] transition disabled:opacity-50"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create Task"}
+              Create Task
             </button>
           </div>
         </form>
       </div>
     </div>
+    </>
   );
 }

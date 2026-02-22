@@ -5,7 +5,8 @@ import { registerUser } from "@/lib/actions/auth";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { UserPlus, Mail, Lock, User, Loader2 } from "lucide-react";
+import { UserPlus, Mail, Lock, User } from "lucide-react";
+import { LoaderOverlay } from "@/components/ui/loader";
 
 function RegisterForm() {
   const [error, setError] = useState("");
@@ -13,9 +14,11 @@ function RegisterForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setLoading(true);
     setError("");
+    const formData = new FormData(e.currentTarget);
     formData.set("callbackUrl", callbackUrl);
     const result = await registerUser(formData);
     if (result?.error) {
@@ -25,7 +28,9 @@ function RegisterForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] bg-dot-pattern">
+    <>
+      {loading && <LoaderOverlay message="Creating your account…" />}
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] bg-dot-pattern">
       <div className="w-full max-w-md px-4">
         <div className="bg-[#141414] rounded-2xl shadow-2xl border border-[#262626] p-8">
           {/* Header */}
@@ -45,7 +50,7 @@ function RegisterForm() {
           )}
 
           {/* Form */}
-          <form action={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-[#a3a3a3] mb-1">
                 Full Name
@@ -97,11 +102,7 @@ function RegisterForm() {
               disabled={loading}
               className="w-full py-2.5 bg-[#6B7A45] text-white font-medium rounded-xl hover:bg-[#4e5a31] transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                "Create Account"
-              )}
+              Create Account
             </button>
           </form>
 
@@ -135,6 +136,7 @@ function RegisterForm() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
