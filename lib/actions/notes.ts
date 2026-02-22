@@ -1,14 +1,8 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-
-async function getCurrentUserId() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  return session.user.id;
-}
 
 export async function getNotes() {
   const userId = await getCurrentUserId();

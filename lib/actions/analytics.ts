@@ -1,13 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-
-async function getCurrentUserId() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  return session.user.id;
-}
+import { getCurrentUserId } from "@/lib/auth";
 
 export async function getAnalytics() {
   const userId = await getCurrentUserId();

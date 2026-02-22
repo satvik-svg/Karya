@@ -1,9 +1,9 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { MyTasksList } from "@/components/my-tasks-list";
 
 export default async function MyTasksPage() {
-  const session = await auth();
+  const session = await getSession();
   const userId = session!.user!.id!;
 
   const tasks = await prisma.task.findMany({

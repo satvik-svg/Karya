@@ -1,23 +1,10 @@
-"use server";
+﻿"use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId, getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { invalidateProjectCache } from "@/lib/redis";
 import { syncTaskToAssignees, updateCalendarEvent, removeTaskFromCalendars } from "@/lib/google-calendar";
-
-async function getCurrentUserId() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  return session.user.id;
-}
-
-async function getCurrentUser() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  return { id: session.user.id, name: session.user.name || "Unknown" };
-}
 
 export async function createTask(formData: FormData) {
   const title = formData.get("title") as string;
@@ -91,10 +78,11 @@ export async function createTask(formData: FormData) {
     }
   });
 
-  await invalidateProjectCache(projectId);
   revalidatePath(`/dashboard/projects/${projectId}`, "page");
   return { success: true, taskId: task.id };
-}export async function updateTask(taskId: string, data: {
+}
+
+export async function updateTask(taskId: string, data: {
   title?: string;
   description?: string;
   priority?: string;
@@ -182,7 +170,6 @@ export async function createTask(formData: FormData) {
     if (logAndNotify.length > 0) await Promise.all(logAndNotify);
   });
 
-  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
   revalidatePath("/dashboard/my-tasks", "page");
 
@@ -218,7 +205,6 @@ export async function deleteTask(taskId: string) {
   }
 
   await prisma.task.delete({ where: { id: taskId } });
-  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
   revalidatePath("/dashboard/my-tasks", "page");
   return { success: true };
@@ -251,7 +237,6 @@ export async function moveTask(taskId: string, newSectionId: string, newOrder: n
     );
   }
 
-  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
 }
 
@@ -377,7 +362,6 @@ export async function addTaskAssignee(taskId: string, userId: string) {
     await Promise.all(jobs);
   });
 
-  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
   revalidatePath("/dashboard/my-tasks", "page");
   return { success: true };
@@ -411,7 +395,6 @@ export async function removeTaskAssignee(taskId: string, userId: string) {
     })
   );
 
-  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
   revalidatePath("/dashboard/my-tasks", "page");
   return { success: true };
@@ -468,7 +451,6 @@ export async function updateTaskAssignees(taskId: string, userIds: string[]) {
     ]);
   });
 
-  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
   revalidatePath("/dashboard/my-tasks", "page");
 

@@ -1,16 +1,9 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { invalidateProjectCache } from "@/lib/redis";
-
-async function getCurrentUserId() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  return session.user.id;
-}
 
 export async function createSubtask(taskId: string, title: string) {
   const userId = await getCurrentUserId();
@@ -38,7 +31,6 @@ export async function createSubtask(taskId: string, title: string) {
   );
 
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
-  after(() => invalidateProjectCache(task.projectId));
   return { success: true, subtask };
 }
 
@@ -68,7 +60,6 @@ export async function toggleSubtask(subtaskId: string) {
   );
 
   revalidatePath(`/dashboard/projects/${subtask.task.projectId}`, "page");
-  after(() => invalidateProjectCache(subtask.task.projectId));
   return { success: true };
 }
 
@@ -81,7 +72,6 @@ export async function deleteSubtask(subtaskId: string) {
 
   await prisma.subtask.delete({ where: { id: subtaskId } });
   revalidatePath(`/dashboard/projects/${subtask.task.projectId}`, "page");
-  after(() => invalidateProjectCache(subtask.task.projectId));
   return { success: true };
 }
 
@@ -98,7 +88,6 @@ export async function updateSubtask(subtaskId: string, data: { title?: string; a
   });
 
   revalidatePath(`/dashboard/projects/${subtask.task.projectId}`, "page");
-  after(() => invalidateProjectCache(subtask.task.projectId));
   return { success: true };
 }
 

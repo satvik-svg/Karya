@@ -1,11 +1,11 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getIdeas } from "@/lib/actions/ideas";
 import { getTeams } from "@/lib/actions/teams";
 import { IdeasBoard } from "@/components/ideas-board";
 import { redirect } from "next/navigation";
 
 export default async function IdeasPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) redirect("/login");
 
   const [ideas, teams] = await Promise.all([getIdeas(), getTeams()]);

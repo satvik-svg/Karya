@@ -1,16 +1,9 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { redis, teamsListCacheKey, projectsListCacheKey, invalidateUserCaches, LIST_CACHE_TTL } from "@/lib/redis";
-import { after } from "next/server";
-
-async function getCurrentUserId() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  return session.user.id;
-}
+import { cache } from "react";
 
 export async function createTeam(name: string) {
   const userId = await getCurrentUserId();
@@ -31,24 +24,15 @@ export async function createTeam(name: string) {
     },
   });
 
-  after(() => invalidateUserCaches(teamsListCacheKey(userId), projectsListCacheKey(userId)));
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/team");
   return { success: true, teamId: team.id };
 }
 
-export async function getTeams() {
+export const getTeams = cache(async () => {
   const userId = await getCurrentUserId();
-  const cacheKey = teamsListCacheKey(userId);
-
-  const cached = await redis.get<unknown>(cacheKey);
-  if (cached) return cached as Awaited<ReturnType<typeof fetchTeams>>;
-
-  const teams = await fetchTeams(userId);
-
-  after(() => redis.setex(cacheKey, LIST_CACHE_TTL, JSON.stringify(teams)));
-  return teams;
-}
+  return fetchTeams(userId);
+});
 
 async function fetchTeams(userId: string) {
   return prisma.team.findMany({
@@ -81,11 +65,6 @@ export async function inviteToTeam(teamId: string, email: string) {
 
   // Bust both users' list caches
   const currentUserId = await getCurrentUserId();
-  after(() => invalidateUserCaches(
-    teamsListCacheKey(user.id),
-    projectsListCacheKey(user.id),
-    teamsListCacheKey(currentUserId),
-  ));
   revalidatePath("/dashboard");
   return { success: true };
 }
@@ -94,7 +73,6 @@ export async function removeFromTeam(teamId: string, userId: string) {
   await prisma.teamMember.delete({
     where: { userId_teamId: { userId, teamId } },
   });
-  after(() => invalidateUserCaches(teamsListCacheKey(userId), projectsListCacheKey(userId)));
   revalidatePath("/dashboard");
 }
 
@@ -109,21 +87,9 @@ export async function deleteTeam(teamId: string) {
     return { error: "Only the team owner can delete the team" };
   }
 
-  // Get all member IDs so we can bust their caches
-  const members = await prisma.teamMember.findMany({
-    where: { teamId },
-    select: { userId: true },
-  });
-
   // Cascade will delete projects, tasks, etc.
   await prisma.team.delete({ where: { id: teamId } });
 
-  // Invalidate caches for all members
-  const cacheKeys = members.flatMap((m) => [
-    teamsListCacheKey(m.userId),
-    projectsListCacheKey(m.userId),
-  ]);
-  await invalidateUserCaches(...cacheKeys);
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/team");
   return { success: true };

@@ -1,9 +1,9 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getTeams } from "@/lib/actions/teams";
 import { TeamManagement } from "@/components/team-management";
 
 export default async function TeamPage() {
-  const session = await auth();
+  const session = await getSession();
   const teams = await getTeams();
 
   return (

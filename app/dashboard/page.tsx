@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getProjects } from "@/lib/actions/projects";
 import { getTeams } from "@/lib/actions/teams";
 import { getMyTasks } from "@/lib/actions/tasks";
@@ -8,7 +8,7 @@ import { CreateProjectDialog } from "@/components/create-project-dialog";
 import { MyTasksCard } from "@/components/my-tasks-card";
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const session = await getSession();
   const [projects, teams, myTasks] = await Promise.all([
     getProjects(),
     getTeams(),
