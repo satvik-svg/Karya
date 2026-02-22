@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { Clock, Mail, Slack, Calendar, ArrowRight } from "lucide-react";
@@ -10,7 +10,7 @@ import {
 } from "@/components/landing-page-components";
 
 export default async function Home() {
-  const session = await auth();
+  const session = await getSession();
   if (session) redirect("/dashboard");
 
   return (

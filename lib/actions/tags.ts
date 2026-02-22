@@ -1,16 +1,8 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { after } from "next/server";
-import { invalidateProjectCache } from "@/lib/redis";
-
-async function getCurrentUserId() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  return session.user.id;
-}
 
 export async function createTag(name: string, color?: string) {
   await getCurrentUserId();
@@ -47,7 +39,6 @@ export async function addTagToTask(taskId: string, tagId: string) {
   const task = await prisma.task.findUnique({ where: { id: taskId } });
   if (task) {
     revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
-    after(() => invalidateProjectCache(task.projectId));
   }
   return { success: true };
 }
@@ -60,7 +51,6 @@ export async function removeTagFromTask(taskId: string, tagId: string) {
   const task = await prisma.task.findUnique({ where: { id: taskId } });
   if (task) {
     revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
-    after(() => invalidateProjectCache(task.projectId));
   }
   return { success: true };
 }

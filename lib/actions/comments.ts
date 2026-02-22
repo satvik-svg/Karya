@@ -1,16 +1,9 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { invalidateProjectCache } from "@/lib/redis";
-
-async function getCurrentUser() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  return { id: session.user.id, name: session.user.name || "Unknown" };
-}
 
 export async function addComment(taskId: string, content: string) {
   const user = await getCurrentUser();
@@ -53,7 +46,6 @@ export async function addComment(taskId: string, content: string) {
     });
 
     revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
-    after(() => invalidateProjectCache(task.projectId));
   }
 
   return comment;
@@ -68,7 +60,6 @@ export async function deleteComment(commentId: string) {
 
   await prisma.comment.delete({ where: { id: commentId } });
   revalidatePath(`/dashboard/projects/${comment.task.projectId}`, "page");
-  after(() => invalidateProjectCache(comment.task.projectId));
 }
 
 export async function addAttachment(taskId: string, data: {
@@ -95,7 +86,6 @@ export async function addAttachment(taskId: string, data: {
       })
     );
     revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
-    after(() => invalidateProjectCache(task.projectId));
   }
 
   return attachment;
@@ -110,5 +100,4 @@ export async function deleteAttachment(attachmentId: string) {
 
   await prisma.attachment.delete({ where: { id: attachmentId } });
   revalidatePath(`/dashboard/projects/${attachment.task.projectId}`, "page");
-  after(() => invalidateProjectCache(attachment.task.projectId));
 }

@@ -1,19 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { auth, getCurrentUser } from "@/lib/auth";
 import { sendInviteEmail } from "@/lib/email";
 import { revalidatePath } from "next/cache";
-import { invalidateProjectCache, invalidateUserCaches, teamsListCacheKey, projectsListCacheKey } from "@/lib/redis";
-import { after } from "next/server";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://anant-ivory.vercel.app";
-
-async function getCurrentUser() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  return { id: session.user.id, name: session.user.name || "Someone" };
-}
 
 // Look up a user by email (for the invite dialog)
 export async function lookupUserByEmail(email: string) {
@@ -61,13 +53,10 @@ export async function addUserToProjectTeam(projectId: string, userId: string) {
     },
   });
 
-  // Bust caches for the invited user so their sidebar refreshes
+  // Revalidate so their sidebar refreshes
   revalidatePath(`/dashboard/projects/${projectId}`, "page");
   revalidatePath("/dashboard/team");
-  after(() => Promise.all([
-    invalidateProjectCache(projectId),
-    invalidateUserCaches(teamsListCacheKey(userId), projectsListCacheKey(userId)),
-  ]));
+  revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -209,18 +198,10 @@ export async function acceptInvite(token: string): Promise<{ success?: boolean; 
       },
     });
 
-    // Bust the new member's sidebar caches so they see the project/team immediately
-    const newMemberId = session.user!.id!;
+    // Revalidate so the new member sees the project/team immediately
     revalidatePath(`/dashboard/projects/${invite.projectId}`, "page");
     revalidatePath("/dashboard/team");
     revalidatePath("/dashboard");
-    after(() => Promise.all([
-      invalidateProjectCache(invite.projectId),
-      invalidateUserCaches(
-        teamsListCacheKey(newMemberId),
-        projectsListCacheKey(newMemberId),
-      ),
-    ]));
 
     return { success: true, projectId: invite.projectId };
   } catch (err) {

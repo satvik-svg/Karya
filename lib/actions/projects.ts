@@ -1,16 +1,10 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { redis, projectCacheKey, projectsListCacheKey, invalidateProjectCache, invalidateUserCaches, PROJECT_CACHE_TTL, LIST_CACHE_TTL } from "@/lib/redis";
 import { after } from "next/server";
-
-async function getCurrentUserId() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  return session.user.id;
-}
+import { cache } from "react";
 
 export async function createProject(formData: FormData) {
   const userId = await getCurrentUserId();
@@ -38,8 +32,6 @@ export async function createProject(formData: FormData) {
     },
   });
 
-  // Bust the sidebar projects list BEFORE revalidating so the layout reads fresh data
-  await invalidateUserCaches(projectsListCacheKey(userId));
   revalidatePath("/dashboard");
   return { success: true, projectId: project.id };
 }
@@ -54,30 +46,20 @@ export async function updateProject(projectId: string, formData: FormData) {
     data: { name, description, color },
   });
 
-  await invalidateProjectCache(projectId);
   revalidatePath(`/dashboard/projects/${projectId}`, "page");
   revalidatePath("/dashboard");
 }
 
 export async function deleteProject(projectId: string) {
-  const userId = await getCurrentUserId();
+  await getCurrentUserId();
   await prisma.project.delete({ where: { id: projectId } });
-  await invalidateUserCaches(projectsListCacheKey(userId));
   revalidatePath("/dashboard");
 }
 
-export async function getProjects() {
+export const getProjects = cache(async () => {
   const userId = await getCurrentUserId();
-  const cacheKey = projectsListCacheKey(userId);
-
-  const cached = await redis.get<unknown>(cacheKey);
-  if (cached) return cached as Awaited<ReturnType<typeof fetchProjects>>;
-
-  const projects = await fetchProjects(userId);
-
-  after(() => redis.setex(cacheKey, LIST_CACHE_TTL, JSON.stringify(projects)));
-  return projects;
-}
+  return fetchProjects(userId);
+});
 
 async function fetchProjects(userId: string) {
   // Single query via relation filter — no separate teamMember lookup needed
@@ -91,22 +73,9 @@ async function fetchProjects(userId: string) {
   });
 }
 
-export async function getProject(projectId: string) {
-  const cacheKey = projectCacheKey(projectId);
-
-  // L1: Redis distributed cache — shared across all serverless instances
-  const cached = await redis.get<unknown>(cacheKey);
-  if (cached) return cached as Awaited<ReturnType<typeof fetchProject>>;
-
-  const project = await fetchProject(projectId);
-
-  // Populate cache in the background so the response isn't blocked
-  if (project) {
-    after(() => redis.setex(cacheKey, PROJECT_CACHE_TTL, JSON.stringify(project)));
-  }
-
-  return project;
-}
+export const getProject = cache(async (projectId: string) => {
+  return fetchProject(projectId);
+});
 
 async function fetchProject(projectId: string) {
   const project = await prisma.project.findUnique({
@@ -216,13 +185,11 @@ export async function createSection(projectId: string, name: string) {
     },
   });
 
-  await invalidateProjectCache(projectId);
   revalidatePath(`/dashboard/projects/${projectId}`, "page");
 }
 
 export async function deleteSection(sectionId: string, projectId: string) {
   await prisma.section.delete({ where: { id: sectionId } });
-  await invalidateProjectCache(projectId);
   revalidatePath(`/dashboard/projects/${projectId}`, "page");
 }
 
@@ -267,8 +234,6 @@ export async function addTaskToProject(taskId: string, targetProjectId: string, 
     });
   });
 
-  await invalidateProjectCache(targetProjectId);
-  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${targetProjectId}`, "page");
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
   return { success: true };
@@ -301,8 +266,6 @@ export async function removeTaskFromProject(taskId: string, projectId: string) {
     });
   });
 
-  await invalidateProjectCache(projectId);
-  await invalidateProjectCache(task.projectId);
   revalidatePath(`/dashboard/projects/${projectId}`, "page");
   revalidatePath(`/dashboard/projects/${task.projectId}`, "page");
   return { success: true };

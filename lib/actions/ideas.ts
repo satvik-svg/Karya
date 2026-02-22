@@ -1,14 +1,8 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-
-async function getCurrentUser() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  return { id: session.user.id, name: session.user.name || "Unknown" };
-}
 
 // Get all user's team IDs
 async function getUserTeamIds(userId: string) {

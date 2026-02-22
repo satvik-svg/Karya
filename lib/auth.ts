@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { authConfig } from "./auth.config";
+import { cache } from "react";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -136,4 +137,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
+});
+
+/**
+ * Request-scoped cached session — deduplicates auth() calls within a single
+ * server render so the JWT is decoded only once no matter how many server
+ * components / actions call it.
+ */
+export const getSession = cache(() => auth());
+
+/** Convenience: returns the current user ID, deduplicated per request. */
+export const getCurrentUserId = cache(async () => {
+  const session = await getSession();
+  if (!session?.user?.id) throw new Error("Not authenticated");
+  return session.user.id;
+});
+
+/** Convenience: returns id + name, deduplicated per request. */
+export const getCurrentUser = cache(async () => {
+  const session = await getSession();
+  if (!session?.user?.id) throw new Error("Not authenticated");
+  return { id: session.user.id, name: session.user.name || "Unknown" };
 });

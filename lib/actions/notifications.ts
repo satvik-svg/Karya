@@ -1,16 +1,9 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { redis, unreadCountCacheKey, invalidateUserCaches, UNREAD_CACHE_TTL } from "@/lib/redis";
-import { after } from "next/server";
-
-async function getCurrentUserId() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
-  return session.user.id;
-}
+import { cache } from "react";
 
 export async function createNotification(userId: string, type: string, message: string, link?: string) {
   await prisma.notification.create({
@@ -27,20 +20,12 @@ export async function getNotifications() {
   });
 }
 
-export async function getUnreadCount() {
+export const getUnreadCount = cache(async () => {
   const userId = await getCurrentUserId();
-  const cacheKey = unreadCountCacheKey(userId);
-
-  const cached = await redis.get<number>(cacheKey);
-  if (cached !== null) return cached;
-
-  const count = await prisma.notification.count({
+  return prisma.notification.count({
     where: { userId, read: false },
   });
-
-  after(() => redis.setex(cacheKey, UNREAD_CACHE_TTL, count));
-  return count;
-}
+});
 
 export async function markAsRead(notificationId: string) {
   const userId = await getCurrentUserId();
@@ -48,8 +33,8 @@ export async function markAsRead(notificationId: string) {
     where: { id: notificationId },
     data: { read: true },
   });
-  after(() => invalidateUserCaches(unreadCountCacheKey(userId)));
   revalidatePath("/dashboard/inbox");
+  revalidatePath("/dashboard");
 }
 
 export async function markAllAsRead() {
@@ -58,8 +43,8 @@ export async function markAllAsRead() {
     where: { userId, read: false },
     data: { read: true },
   });
-  after(() => invalidateUserCaches(unreadCountCacheKey(userId)));
   revalidatePath("/dashboard/inbox");
+  revalidatePath("/dashboard");
 }
 
 export async function deleteNotification(notificationId: string) {

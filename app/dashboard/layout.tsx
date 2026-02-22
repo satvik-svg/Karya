@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getProjects } from "@/lib/actions/projects";
 import { getTeams } from "@/lib/actions/teams";
@@ -10,7 +10,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const [projects, teams, unreadCount] = await Promise.all([

@@ -1,5 +1,5 @@
 import { getInviteByToken, acceptInvite } from "@/lib/actions/invites";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { InviteAcceptClient } from "./client";
 
@@ -11,7 +11,7 @@ export default async function InvitePage({ params }: Props) {
   const { token } = await params;
   const [invite, session] = await Promise.all([
     getInviteByToken(token),
-    auth(),
+    getSession(),
   ]);
 
   if (!invite) {

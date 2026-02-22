@@ -1,7 +1,7 @@
 import { getProject } from "@/lib/actions/projects";
 import { notFound } from "next/navigation";
 import { ProjectView } from "@/components/project-view";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 interface Props {
@@ -12,7 +12,7 @@ export default async function ProjectPage({ params }: Props) {
   const { projectId } = await params;
   const [project, session] = await Promise.all([
     getProject(projectId),
-    auth(),
+    getSession(),
   ]);
 
   if (!project || !session?.user?.id) notFound();
