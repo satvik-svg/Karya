@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { createProject } from "@/lib/actions/projects";
-import { Plus, X, Loader2 } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { LoaderOverlay } from "@/components/ui/loader";
 
 const COLORS = [
   "#6366f1", "#8b5cf6", "#ec4899", "#f43f5e",
@@ -23,22 +24,32 @@ export function CreateProjectDialog({ teams, trigger }: Props) {
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
+  const [, startTransition] = useTransition();
 
   useEffect(() => { setMounted(true); }, []);
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setLoading(true);
+    const formData = new FormData(e.currentTarget);
     formData.set("color", selectedColor);
     const result = await createProject(formData);
-    setLoading(false);
-    if (result?.projectId) {
-      setOpen(false);
-      router.push(`/dashboard/projects/${result.projectId}`);
-      router.refresh();
+    if (!result?.projectId) {
+      // Error — hide loader and stay on form
+      setLoading(false);
+      return;
     }
+    // Keep overlay visible while Next.js navigates to the new project page.
+    // The component (and overlay) unmount once the new page renders.
+    setOpen(false);
+    startTransition(() => {
+      router.push(`/dashboard/projects/${result.projectId}`);
+    });
   }
 
   const modal = open && mounted ? createPortal(
+    <>
+    {loading && <LoaderOverlay message="Creating project…" />}
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-[#141414] border border-[#262626] rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
         <div className="flex items-center justify-between mb-6">
@@ -51,7 +62,7 @@ export function CreateProjectDialog({ teams, trigger }: Props) {
           </button>
         </div>
 
-        <form action={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[#a3a3a3] mb-1">
               Project name
@@ -124,14 +135,15 @@ export function CreateProjectDialog({ teams, trigger }: Props) {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2 text-sm font-medium text-white bg-[#6B7A45] rounded-xl hover:bg-[#4e5a31] transition disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-2 text-sm font-medium text-white bg-[#6B7A45] rounded-xl hover:bg-[#4e5a31] transition disabled:opacity-50"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
+              Create
             </button>
           </div>
         </form>
       </div>
-    </div>,
+    </div>
+    </>,
     document.body
   ) : null;
 

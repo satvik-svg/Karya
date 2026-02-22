@@ -4,26 +4,27 @@ import React from "react";
 
 export function LoaderOne() {
   return (
-    <div className="relative flex h-20 w-20 items-center justify-center">
-      {/* Outer spinning ring */}
-      <div
-        className="absolute inset-0 rounded-full"
-        style={{
-          background:
-            "conic-gradient(from 0deg, transparent 0deg, #6B7A45 360deg)",
-          animation: "spin 1.2s linear infinite",
-          WebkitMask:
-            "radial-gradient(circle, transparent 56%, black 57%)",
-          mask: "radial-gradient(circle, transparent 56%, black 57%)",
-        }}
-      />
-      {/* Inner pulsing dot */}
-      <div className="h-4 w-4 rounded-full bg-[#6B7A45] animate-pulse" />
-
+    <div className="flex items-center gap-3">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="h-3 w-3 rounded-full bg-[#a3a3a3]"
+          style={{
+            animation: "dotBounce 1.2s ease-in-out infinite",
+            animationDelay: `${i * 0.2}s`,
+          }}
+        />
+      ))}
       <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
+        @keyframes dotBounce {
+          0%, 80%, 100% {
+            transform: scale(0.6);
+            opacity: 0.3;
+          }
+          40% {
+            transform: scale(1);
+            opacity: 1;
+          }
         }
       `}</style>
     </div>
@@ -32,14 +33,13 @@ export function LoaderOne() {
 
 /**
  * Full-screen overlay that renders LoaderOne centered on the viewport.
- * Rendered on top of everything via a fixed portal-like div.
  */
 export function LoaderOverlay({ message }: { message?: string }) {
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0a0a0a]/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0a0a0a]/90 backdrop-blur-sm">
       <LoaderOne />
       {message && (
-        <p className="mt-6 text-sm font-medium text-[#a3a3a3] tracking-wide">
+        <p className="mt-6 text-sm font-medium text-[#525252] tracking-widest uppercase">
           {message}
         </p>
       )}
