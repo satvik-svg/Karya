@@ -136,8 +136,8 @@ export default async function Home() {
             © 2026 All rights reserved. Built for modern teams.
           </p>
           <div className="flex items-center gap-6 text-sm text-[#737373]">
-            <a href="#" className="hover:text-[#f5f5f5] transition-colors">Privacy</a>
-            <a href="#" className="hover:text-[#f5f5f5] transition-colors">Terms</a>
+            <a href="/privacy" className="hover:text-[#f5f5f5] transition-colors">Privacy</a>
+            <a href="/terms" className="hover:text-[#f5f5f5] transition-colors">Terms</a>
           </div>
         </div>
       </footer>

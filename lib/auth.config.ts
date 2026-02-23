@@ -26,7 +26,7 @@ export const authConfig: NextAuthConfig = {
       const pathname = nextUrl.pathname;
 
       // Public routes
-      if (pathname === "/" || pathname === "/login" || pathname === "/register" || pathname.startsWith("/invite/")) {
+      if (pathname === "/" || pathname === "/login" || pathname === "/register" || pathname === "/privacy" || pathname === "/terms" || pathname.startsWith("/invite/")) {
         return true;
       }
 
