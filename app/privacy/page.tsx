@@ -3,8 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy - Anant",
-  description: "Privacy Policy for Anant Work Management Platform",
+  title: "Privacy Policy - Karya",
+  description: "Privacy Policy for Karya Work Management Platform",
 };
 
 export default function PrivacyPolicy() {
@@ -43,7 +43,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-xl font-semibold text-[#f5f5f5] mb-3">1. Introduction</h2>
             <p>
-              Welcome to <strong>Anant</strong> (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). Anant is a work management
+              Welcome to <strong>Karya</strong> (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). Karya is a work management
               platform that helps teams plan, track, and collaborate on projects. This Privacy Policy
               explains how we collect, use, disclose, and safeguard your information when you use our
               application and services available at{" "}
@@ -94,7 +94,7 @@ export default function PrivacyPolicy() {
               <li>
                 <strong>Google Calendar Data:</strong> If you connect your Google Calendar, we access
                 your calendar to create, update, and delete events related to your tasks and
-                deadlines within Anant. We only access calendar data necessary to sync your tasks.
+                deadlines within Karya. We only access calendar data necessary to sync your tasks.
               </li>
             </ul>
 
@@ -137,7 +137,7 @@ export default function PrivacyPolicy() {
               4. Google API Services – Limited Use Disclosure
             </h2>
             <p>
-              Anant&apos;s use and transfer of information received from Google APIs adheres to the{" "}
+              Karya&apos;s use and transfer of information received from Google APIs adheres to the{" "}
               <a
                 href="https://developers.google.com/terms/api-services-user-data-policy"
                 target="_blank"

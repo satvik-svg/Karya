@@ -3,8 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Terms of Service - Anant",
-  description: "Terms of Service for Anant Work Management Platform",
+  title: "Terms of Service - Karya",
+  description: "Terms of Service for Karya Work Management Platform",
 };
 
 export default function TermsOfService() {
@@ -43,7 +43,7 @@ export default function TermsOfService() {
           <section>
             <h2 className="text-xl font-semibold text-[#f5f5f5] mb-3">1. Acceptance of Terms</h2>
             <p>
-              By accessing or using <strong>Anant</strong> (&quot;the Service&quot;), available at{" "}
+              By accessing or using <strong>Karya</strong> (&quot;the Service&quot;), available at{" "}
               <a href="https://www.arogyaherb.store" className="text-[#6B7A45] hover:underline">
                 arogyaherb.store
               </a>
@@ -57,7 +57,7 @@ export default function TermsOfService() {
               2. Description of Service
             </h2>
             <p>
-              Anant is a work management platform that enables users to create and manage projects,
+              Karya is a work management platform that enables users to create and manage projects,
               track tasks, collaborate with team members, take notes, organize ideas, and optionally
               sync tasks with Google Calendar. The Service is provided &quot;as is&quot; and &quot;as available.&quot;
             </p>
@@ -132,7 +132,7 @@ export default function TermsOfService() {
               6. Google Calendar Integration
             </h2>
             <p>
-              If you choose to connect your Google Calendar, you authorize Anant to create, update,
+              If you choose to connect your Google Calendar, you authorize Karya to create, update,
               and delete calendar events associated with your tasks and deadlines. This integration
               is optional and can be disconnected at any time.
             </p>
@@ -171,7 +171,7 @@ export default function TermsOfService() {
             </h2>
             <p>
               The Service, including but not limited to its design, logos, code, and features, is
-              owned by Anant and protected by intellectual property laws. You may not copy, modify,
+              owned by Karya and protected by intellectual property laws. You may not copy, modify,
               distribute, or reverse-engineer any part of the Service without our prior written
               consent.
             </p>
@@ -210,7 +210,7 @@ export default function TermsOfService() {
               11. Limitation of Liability
             </h2>
             <p>
-              To the maximum extent permitted by applicable law, Anant and its affiliates shall not
+              To the maximum extent permitted by applicable law, Karya and its affiliates shall not
               be liable for any indirect, incidental, special, consequential, or punitive damages, or
               any loss of profits or revenues, whether incurred directly or indirectly, or any loss
               of data, use, goodwill, or other intangible losses, resulting from your access to or
