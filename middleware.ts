@@ -16,7 +16,7 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
 
   // Public routes
-  if (pathname === "/" || pathname === "/login" || pathname === "/register" || pathname.startsWith("/invite/")) {
+  if (pathname === "/" || pathname === "/login" || pathname === "/register" || pathname === "/privacy" || pathname === "/terms" || pathname.startsWith("/invite/")) {
     if (isLoggedIn && (pathname === "/login" || pathname === "/register")) {
       return Response.redirect(new URL("/dashboard", req.nextUrl));
     }
