@@ -74,9 +74,9 @@ export function InviteAcceptClient({
           {/* Logo */}
           <div className="flex items-center gap-2.5 mb-8">
             <div className="w-9 h-9 bg-[#6B7C42] rounded-xl flex items-center justify-center text-white font-bold text-lg">
-              A
+              K
             </div>
-            <span className="text-xl font-bold text-gray-900">Anant</span>
+            <span className="text-xl font-bold text-gray-900">Karya</span>
           </div>
 
           {accepted ? (
