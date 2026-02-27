@@ -25,15 +25,16 @@ export default async function Home() {
         <div className="relative z-20 flex flex-col items-center text-center">
 
           {/* Center logo icon */}
-          <div className="mb-8 bg-[#141414] border border-[#262626] rounded-2xl shadow-lg p-3 inline-flex items-center justify-center">
+          <div className="mb-8 bg-[#141414] border border-[#262626] rounded-2xl shadow-lg p-3 inline-flex items-center justify-center gap-3">
             <Image
               src="/logo.png"
-              alt="Logo"
+              alt="Karya Logo"
               width={60}
               height={60}
               className="object-contain rounded-xl"
               priority
             />
+            <span className="text-2xl font-bold text-[#f5f5f5] tracking-tight pr-2">Karya</span>
           </div>
 
           {/* Headline */}
@@ -45,7 +46,7 @@ export default async function Home() {
 
           {/* Subtitle */}
           <p className="text-base md:text-lg text-[#a3a3a3] max-w-xl mx-auto mb-10">
-            Efficiently manage your tasks and boost productivity.
+            Karya helps you efficiently manage tasks and boost productivity.
           </p>
 
           {/* CTA */}
@@ -130,10 +131,11 @@ export default async function Home() {
       <footer className="relative z-10 border-t border-[#262626] py-10 px-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Logo" width={36} height={36} className="rounded-lg object-contain" />
+            <Image src="/logo.png" alt="Karya Logo" width={36} height={36} className="rounded-lg object-contain" />
+            <span className="text-sm font-semibold text-[#f5f5f5]">Karya</span>
           </div>
           <p className="text-sm text-[#737373]">
-            © 2026 All rights reserved. Built for modern teams.
+            © 2026 Karya. All rights reserved. Built for modern teams.
           </p>
           <div className="flex items-center gap-6 text-sm text-[#737373]">
             <a href="/privacy" className="hover:text-[#f5f5f5] transition-colors">Privacy</a>
