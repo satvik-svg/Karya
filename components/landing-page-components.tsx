@@ -66,12 +66,13 @@ export function LandingNav() {
             <div className="flex items-center gap-2.5">
                 <Image
                     src="/logo.png"
-                    alt="Logo"
+                    alt="Karya Logo"
                     width={60}
                     height={60}
                     className="rounded-xl object-contain"
                     priority
                 />
+                <span className="text-xl font-bold text-[#f5f5f5] tracking-tight">Karya</span>
             </div>
 
   
